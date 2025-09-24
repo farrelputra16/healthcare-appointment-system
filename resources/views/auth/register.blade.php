@@ -17,13 +17,13 @@
         </div>
 
         <div class="mt-4">
-        <x-input-label for="role" :value="__('Pilih Peran')" />
-        <select id="role" name="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-        <option value="patient">Patient</option>
-        <option value="doctor">Doctor</option>
-        <option value="admin">Admin</option>
+        <x-input-label for="role_id" :value="__('Pilih Peran')" />
+        <select id="role_id" name="role_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+            @foreach ($roles as $role)
+                <option value="{{ $role->id }}">{{ $role->display_name }}</option>
+            @endforeach
         </select>
-        <x-input-error :messages="$errors->get('role')" class="mt-2" />
+        <x-input-error :messages="$errors->get('role_id')" class="mt-2" />
         </div>
 
         <!-- Password -->

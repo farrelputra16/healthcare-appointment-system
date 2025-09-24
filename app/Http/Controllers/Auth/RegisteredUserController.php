@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
-
-use App\Providers\RouteServiceProvider;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Role;
+use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +20,9 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        return view('auth.register');
+        // Ambil semua peran dari tabel roles dan kirim ke view
+        $roles = Role::all();
+        return view('auth.register', compact('roles'));
     }
 
     /**
@@ -29,25 +31,25 @@ class RegisteredUserController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
-{
-    $request->validate([
-        'name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-        'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        'role' => ['required', 'string', 'in:admin,doctor,patient'], // Tambahkan validasi untuk 'role'
-    ]);
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role_id' => ['required', 'exists:roles,id'], // Validasi 'role_id'
+        ]);
 
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-        'role' => $request->role, // Simpan 'role' dari input form
-    ]);
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role_id' => $request->role_id, // Simpan ID dari peran yang dipilih
+        ]);
 
-    event(new Registered($user));
+        event(new Registered($user));
 
-    Auth::login($user);
+        Auth::login($user);
 
-    return redirect(RouteServiceProvider::HOME);
-}
+        return redirect(RouteServiceProvider::HOME);
+    }
 }
