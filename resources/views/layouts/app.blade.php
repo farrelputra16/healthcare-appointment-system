@@ -58,9 +58,17 @@
         $navLinks = [
             ['route' => 'register', 'label' => 'Jadwal Dokter', 'icon' => 'M8 7V3m8 4V3m-4 4V3m-4 14h8M5 10h14a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v4a1 1 0 001 1z'],
             ['route' => 'register', 'label' => 'Rekam Medis', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
-            ['route' => 'register', 'label' => 'Pembayaran', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m-8-2h.01M21 12h-6.25'],
         ];
     @endphp
+    {{-- 5. Pembayaran --}}
+    <a href="{{ route('payments.index') }}" 
+       class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('payments.*') ? 'bg-white/20' : '' }}">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m-8-2h.01M21 12h-6.25" />
+        </svg>
+        Pembayaran
+    </a>
 
     @foreach ($navLinks as $link)
         <a href="#" class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150">
