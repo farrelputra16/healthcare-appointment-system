@@ -21,7 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'role_id',
     ];
 
     /**
@@ -55,5 +55,10 @@ class User extends Authenticatable
         public function hasPermissionTo($permission)
     {
         return $this->roles()->first()->permissions()->where('name', $permission)->exists();
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role_id === 1;
     }
 }
