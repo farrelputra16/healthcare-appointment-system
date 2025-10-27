@@ -10,12 +10,23 @@
             <form action="{{ route('payments.store') }}" method="POST">
                 @csrf
 
+                @if ($errors->any())
+                    <div class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg shadow-sm">
+                        <ul class="list-disc list-inside">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <div class="mb-5">
                     <label class="block text-gray-700 font-semibold mb-2">Appointment</label>
-                    <select name="appointment_id" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                    <select name="appointment_id" class="w-full border border-gray-300 rounded-lg px-4 py-2" required>
+                        <option value="">Pilih Appointment</option>
                         @foreach ($appointments as $appointment)
                             <option value="{{ $appointment->id }}">
-                                Appointment #{{ $appointment->id }}
+                                #{{ $appointment->id }} - {{ $appointment->scheduled_at ?? 'No Date' }}
                             </option>
                         @endforeach
                     </select>
@@ -30,16 +41,27 @@
 
                 <div class="mb-5">
                     <label class="block text-gray-700 font-semibold mb-2">Method</label>
-                    <input type="text" name="method"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2"
-                        required>
+                    <select name="method" class="w-full border border-gray-300 rounded-lg px-4 py-2" required>
+                        <option value="">Pilih Metode Pembayaran</option>
+                        <option value="va_bca">Virtual Account BCA</option>
+                        <option value="va_mandiri">Virtual Account Mandiri</option>
+                        <option value="va_bni">Virtual Account BNI</option>
+                        <option value="ewallet_ovo">OVO</option>
+                        <option value="ewallet_gopay">GoPay</option>
+                        <option value="cash">Cash</option>
+                    </select>
                 </div>
 
                 <div class="mb-5">
                     <label class="block text-gray-700 font-semibold mb-2">Status</label>
-                    <input type="text" name="status"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2"
-                        required>
+                    <select name="status" class="w-full border border-gray-300 rounded-lg px-4 py-2" required>
+                        <option value="">Pilih Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="failed">Failed</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="expired">Expired</option>
+                    </select>
                 </div>
 
                 <div class="flex justify-end space-x-3">

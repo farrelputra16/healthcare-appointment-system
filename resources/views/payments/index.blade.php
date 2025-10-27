@@ -17,10 +17,16 @@
                     </a>
                 </div>
 
-                {{-- Pesan Sukses --}}
+                {{-- Pesan --}}
                 @if (session('success'))
                     <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg shadow-sm">
                         {{ session('success') }}
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg shadow-sm">
+                        {{ session('error') }}
                     </div>
                 @endif
 
@@ -42,21 +48,51 @@
                                 <td class="border-b px-6 py-4 text-sm text-gray-600">{{ $loop->iteration }}</td>
 
                                 <td class="border-b px-6 py-4 text-sm text-gray-800">
-                                @if ($payment->appointment && $payment->appointment->doctor && $payment->appointment->patient)
-                                    {{ $payment->appointment->doctor->user->name }} - {{ $payment->appointment->patient->user->name }}
-                                @else
-                                    N/A
-                                @endif
+                                    @if ($payment->appointment && $payment->appointment->doctor && $payment->appointment->patient)
+                                        <div class="text-xs">
+                                            <span class="font-semibold">Dr. {{ $payment->appointment->doctor->user->name }}</span>
+                                            <br>
+                                            <span class="text-gray-600">Patient: {{ $payment->appointment->patient->user->name }}</span>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400">N/A</span>
+                                    @endif
                                 </td>
 
                                 <td class="border-b px-6 py-4 text-sm text-gray-600">
                                     Rp {{ number_format($payment->amount, 2, ',', '.') }}
                                 </td>
 
-                                <td class="border-b px-6 py-4 text-sm text-gray-800">{{ $payment->method }}</td>
-                                <td class="border-b px-6 py-4 text-sm text-gray-800">{{ $payment->status }}</td>
+                                <td class="border-b px-6 py-4 text-sm text-gray-800">
+                                    @php
+                                        $methodNames = [
+                                            'va_bca' => 'VA BCA',
+                                            'va_mandiri' => 'VA Mandiri',
+                                            'va_bni' => 'VA BNI',
+                                            'ewallet_ovo' => 'OVO',
+                                            'ewallet_gopay' => 'GoPay',
+                                            'cash' => 'Cash',
+                                        ];
+                                    @endphp
+                                    {{ $methodNames[$payment->method] ?? $payment->method }}
+                                </td>
+                                <td class="border-b px-6 py-4 text-sm">
+                                    @if ($payment->status === 'paid')
+                                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Paid</span>
+                                    @elseif ($payment->status === 'pending')
+                                        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">Pending</span>
+                                    @elseif ($payment->status === 'failed')
+                                        <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Failed</span>
+                                    @elseif ($payment->status === 'cancelled')
+                                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">Cancelled</span>
+                                    @elseif ($payment->status === 'expired')
+                                        <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-semibold">Expired</span>
+                                    @else
+                                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">{{ ucfirst($payment->status) }}</span>
+                                    @endif
+                                </td>
 
-                                <td class="border-b px-6 py-4 text-sm space-x-3">
+                                <td class="border-b px-6 py-4 text-sm space-x-2">
                                     <a href="{{ route('payments.edit', $payment) }}"
                                     class="text-green-600 hover:text-green-700 font-medium">Edit</a>
                                     <span class="text-gray-300">|</span>
@@ -67,7 +103,24 @@
                                     >
                                         Hapus
                                     </button>
+                                    @if ($payment->status === 'pending' && (empty($payment->payment_url) || $payment->isExpired()))
+                                        <span class="text-gray-300">|</span>
+                                        <form action="{{ route('payments.pay', $payment->id) }}" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit"
+                                                class="text-blue-600 hover:text-blue-700 font-medium">
+                                                Bayar
+                                            </button>
+                                        </form>
+                                    @elseif (!empty($payment->payment_url) && $payment->status !== 'paid' && !$payment->isExpired())
+                                        <span class="text-gray-300">|</span>
+                                        <a href="{{ $payment->payment_url }}" target="_blank"
+                                            class="text-blue-600 hover:text-blue-700 font-medium">
+                                            Lanjutkan
+                                        </a>
+                                    @endif
                                 </td>
+
                             </tr>
                         @endforeach
                     </tbody>

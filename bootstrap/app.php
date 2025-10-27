@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+        // Exempt webhook route from CSRF protection
+        $middleware->validateCsrfTokens(except: [
+            'webhook/payment',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
