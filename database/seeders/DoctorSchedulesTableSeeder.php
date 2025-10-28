@@ -9,15 +9,26 @@ class DoctorSchedulesTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $doctors = Doctor::all();
+        $doctors = Doctor::with('hospitalDepartment')->get(); // Ambil semua dokter
         $schedules = [];
+        $daysOfWeek = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+        if ($doctors->isEmpty()) {
+             $this->command->warn('Tidak ada dokter ditemukan untuk dibuatkan jadwal. Jalankan DoctorsTableSeeder dahulu.');
+             return;
+        }
 
         foreach ($doctors as $doctor) {
-            // Hari kerja yang akan digunakan
-            $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
-            $maxPatients = ($doctor->specialty === 'Kardiologi') ? 10 : 20;
+            // Pilih 3 hari acak untuk praktik
+            shuffle($daysOfWeek);
+            $practiceDays = array_slice($daysOfWeek, 0, 3);
 
-            foreach ($days as $day) {
+            // Tentukan kuota berdasarkan spesialisasi (contoh)
+            $maxPatients = ($doctor->specialty === 'Kardiologi' || $doctor->specialty === 'Neurologi') ? 10 : 15;
+             if ($doctor->specialty === 'Dokter Gigi' || $doctor->specialty === 'Mata') $maxPatients = 20;
+
+
+            foreach ($practiceDays as $day) {
                 // Jadwal Pagi (08:00 - 12:00)
                 $schedules[] = [
                     'doctor_id' => $doctor->id,
@@ -42,7 +53,12 @@ class DoctorSchedulesTableSeeder extends Seeder
             }
         }
 
+        // Hapus jadwal lama sebelum insert baru (opsional, tapi disarankan)
+       // DB::table('doctor_schedules')->truncate();
+
+        // Insert jadwal baru
         DB::table('doctor_schedules')->insert($schedules);
-        $this->command->info('Total ' . count($schedules) . ' Jadwal telah dibuat untuk semua dokter.');
+
+        $this->command->info('Total ' . count($schedules) . ' jadwal telah dibuat untuk ' . $doctors->count() . ' dokter.');
     }
 }

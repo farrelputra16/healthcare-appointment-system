@@ -1,20 +1,16 @@
 <x-layouts.patient-app>
     <x-slot name="header">
-        {{ __('Pesan Janji Temu') }}
+        {{ __('Detail & Jadwal Dokter') }}
     </x-slot>
 
     <div class="space-y-8">
 
-        {{-- CARD PROFIL DOKTER --}}
+        {{-- CARD PROFIL DOKTER (Sama seperti sebelumnya) --}}
         <div class="bg-white rounded-xl p-6 card-shadow border-t-4 border-primary-blue">
             <div class="flex items-start space-x-6">
-
-                {{-- Foto Dokter (Placeholder) --}}
                 <div class="shrink-0">
                     <img src="https://i.pravatar.cc/150?img={{ $doctor->id }}" alt="{{ $doctor->user->name }}" class="w-24 h-24 object-cover rounded-full border-4 border-gray-100">
                 </div>
-
-                {{-- Detail Dokter --}}
                 <div>
                     <h3 class="text-3xl font-extrabold text-gray-900 mb-1">{{ $doctor->user->name }}</h3>
                     <p class="text-lg font-semibold text-primary-blue">{{ $doctor->specialty }}</p>
@@ -24,42 +20,39 @@
             </div>
         </div>
 
-        {{-- JADWAL PRAKTIK MINGGUAN (Tabel Informasi) --}}
+        {{-- JADWAL PRAKTIK MINGGUAN (Tampilan Baru - Card per Hari) --}}
         <div class="bg-white rounded-xl p-6 card-shadow">
-            <h4 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Jadwal Praktik Mingguan</h4>
+            <h4 class="text-xl font-bold mb-6 text-gray-800 border-b pb-3">Jadwal Praktik Tersedia</h4>
 
-            @if(empty($schedules) || collect($schedules)->flatten()->isEmpty())
-                <p class="text-red-500 font-semibold">⚠️ Dokter tidak memiliki jadwal praktik yang terdaftar.</p>
+            @if(empty($schedules) || $schedules->isEmpty())
+                <p class="text-center text-red-500 font-semibold py-4">⚠️ Dokter ini belum memiliki jadwal praktik.</p>
             @else
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hari</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jam Praktik</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kuota Pasien</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {{-- Flatten the schedules array to list all entries --}}
-                            @php $allSchedules = collect($schedules)->flatten(); @endphp
-                            @foreach ($allSchedules as $schedule)
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap font-semibold">{{ $schedule->day_of_week }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-primary-blue font-mono">{{ substr($schedule->start_time, 0, 5) }} - {{ substr($schedule->end_time, 0, 5) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ $schedule->max_patients }} Pasien</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {{-- Loop berdasarkan Hari (Key dari groupBy) --}}
+                    @foreach ($schedules as $day => $daySchedules)
+                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <h5 class="font-bold text-lg text-primary-blue mb-3 text-center">{{ $day }}</h5>
+                            <div class="space-y-2">
+                                {{-- Loop Jam Praktik untuk Hari Ini --}}
+                                @foreach ($daySchedules as $schedule)
+                                    <div class="bg-blue-50 border border-primary-blue/30 rounded-md p-3 text-center transition hover:bg-blue-100">
+                                        <p class="font-semibold text-gray-800 text-sm">
+                                            {{ substr($schedule->start_time, 0, 5) }} - {{ substr($schedule->end_time, 0, 5) }}
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">Kuota: {{ $schedule->max_patients }} Pasien</p>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             @endif
         </div>
 
-        {{-- AREA FORM PEMESANAN --}}
+        {{-- AREA FORM PEMESANAN (Sama, tapi dengan penyesuaian label) --}}
         <div class="bg-white rounded-xl p-6 card-shadow">
 
-            <h4 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Pesan Janji Temu</h4>
+            <h4 class="text-xl font-bold mb-6 text-gray-800 border-b pb-3">Pesan Janji Temu</h4>
 
             @if ($errors->any())
                 <div class="mb-4 p-4 bg-red-100 border border-red-300 rounded-lg text-red-700">
@@ -81,24 +74,23 @@
                     <label for="appointment_date" class="block font-medium text-gray-800 mb-2">Pilih Tanggal Kunjungan</label>
                     <input type="date" id="appointment_date" name="appointment_date" required min="{{ now()->format('Y-m-d') }}"
                            class="w-full border-gray-300 rounded-xl shadow-sm bg-white text-gray-900 focus:border-primary-blue focus:ring-primary-blue">
-                    <small class="text-gray-500 mt-2 block">Pilih tanggal untuk melihat jam praktik yang tersedia.</small>
+                    <small class="text-gray-500 mt-2 block">Pilih tanggal untuk mengaktifkan pilihan jam.</small>
                 </div>
 
-                {{-- 2. Pilih Jam (Jadwal Tersedia) --}}
+                {{-- 2. Pilih Jam (Dropdown disaring oleh JS) --}}
                 <div>
-                    <label for="schedule_id" class="block font-medium text-gray-800 mb-2">Pilih Jam</label>
+                    <label for="schedule_id" class="block font-medium text-gray-800 mb-2">Pilih Jam Sesuai Jadwal di Atas</label>
                     <select id="schedule_id" name="schedule_id" required disabled
                             class="w-full border-gray-300 rounded-xl shadow-sm bg-gray-100 text-gray-500 focus:border-primary-blue focus:ring-primary-blue disabled:bg-gray-100 disabled:text-gray-500">
                         <option value="">Pilih tanggal terlebih dahulu</option>
 
-                        {{-- Opsi Jadwal --}}
-                        @foreach(collect($schedules)->flatten() as $schedule)
+                        {{-- Opsi Jadwal (Semua akan disembunyikan/dinonaktifkan oleh JS saat inisialisasi) --}}
+                        @php $allScheduleOptions = collect($schedules)->flatten(); @endphp
+                        @foreach($allScheduleOptions as $schedule)
                             <option value="{{ $schedule->id }}"
                                     data-day="{{ $schedule->day_of_week }}"
-                                    data-time="{{ substr($schedule->start_time, 0, 5) }} - {{ substr($schedule->end_time, 0, 5) }}"
-                                    data-max-patients="{{ $schedule->max_patients }}"
                                     class="hidden">
-                                {{ substr($schedule->start_time, 0, 5) }} - {{ substr($schedule->end_time, 0, 5) }} (Kuota: {{ $schedule->max_patients }})
+                                {{ $schedule->day_of_week }}, {{ substr($schedule->start_time, 0, 5) }} - {{ substr($schedule->end_time, 0, 5) }}
                             </option>
                         @endforeach
                     </select>
@@ -129,7 +121,7 @@
         </div>
     </div>
 
-    {{-- Script untuk memfilter jadwal dan menghitung antrian --}}
+    {{-- Script JavaScript (Sama seperti sebelumnya, tidak perlu diubah) --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const dateInput = document.getElementById('appointment_date');
@@ -140,7 +132,6 @@
             const queueDisplay = document.getElementById('queue-display');
             const nextQueueNumberSpan = document.getElementById('next-queue-number');
 
-            // Fungsi untuk mengkonversi tanggal ke nama hari dalam Bahasa Indonesia (sesuai seeder)
             function getDayName(dateString) {
                 const date = new Date(dateString + 'T00:00:00');
                 const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -150,7 +141,6 @@
             function filterSchedules() {
                 const dateValue = dateInput.value;
 
-                // --- A. Reset UI ---
                 scheduleSelect.disabled = true;
                 scheduleSelect.value = "";
                 scheduleOptions.forEach(opt => opt.classList.add('hidden'));
@@ -159,11 +149,8 @@
                 queueDisplay.classList.add('hidden');
                 scheduleSelect.classList.add('bg-gray-100', 'text-gray-500');
 
-                if (!dateValue) {
-                    return;
-                }
+                if (!dateValue) return;
 
-                // --- B. Filter Opsi ---
                 scheduleSelect.classList.remove('bg-gray-100', 'text-gray-500');
                 scheduleSelect.disabled = false;
                 placeholderOption.textContent = "Memuat jadwal...";
@@ -173,7 +160,6 @@
 
                 scheduleOptions.forEach(option => {
                     const optionDay = option.getAttribute('data-day');
-
                     if (optionDay === selectedDayName) {
                         option.classList.remove('hidden');
                         foundValidSchedule = true;
@@ -182,7 +168,6 @@
                     }
                 });
 
-                // --- C. Atur Status Akhir ---
                 if (foundValidSchedule) {
                     placeholderOption.textContent = "--- Pilih Jam Praktik ---";
                     scheduleSelect.value = "";
@@ -198,7 +183,6 @@
                 const scheduleId = scheduleSelect.value;
                 const appointmentDate = dateInput.value;
 
-                // Sembunyikan jika input tidak lengkap
                 if (!scheduleId || !appointmentDate) {
                     queueDisplay.classList.add('hidden');
                     return;
@@ -211,7 +195,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') // Ambil CSRF Token dari meta tag
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
                     body: JSON.stringify({
                         schedule_id: scheduleId,
@@ -232,15 +216,13 @@
                 });
             }
 
-            // --- LISTENERS ---
             dateInput.addEventListener('change', () => {
                 filterSchedules();
                 calculateQueueStatus();
             });
             scheduleSelect.addEventListener('change', calculateQueueStatus);
 
-            // Inisialisasi filter saat halaman dimuat
-            filterSchedules();
+            filterSchedules(); // Inisialisasi
         });
     </script>
 </x-layouts.patient-app>

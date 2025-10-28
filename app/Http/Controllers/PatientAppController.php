@@ -2,32 +2,54 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Appointment;
 use App\Models\Doctor;
 use App\Models\DoctorSchedule;
-use App\Models\Appointment;
+use App\Models\HospitalDepartment;
 use App\Models\Patient;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Pagination\LengthAwarePaginator; // <-- TAMBAHKAN USE STATEMENT INI
 
 class PatientAppController extends Controller
 {
     /**
-     * Menampilkan daftar semua dokter dan fitur pencarian.
+     * Menampilkan daftar dokter, dikelompokkan berdasarkan departemen.
      */
     public function index(Request $request)
     {
-        $query = Doctor::with('hospitalDepartment');
+        $query = Doctor::with(['user', 'hospitalDepartment']);
 
         if ($request->filled('search')) {
-            $query->where('specialty', 'like', '%' . $request->search . '%')
-                  ->orWhereHas('user', function ($q) use ($request) {
-                      $q->where('name', 'like', '%' . $request->search . '%');
-                  });
+            $searchTerm = '%' . $request->search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('specialty', 'like', $searchTerm)
+                    ->orWhereHas('user', function ($uq) use ($searchTerm) {
+                        $uq->where('name', 'like', $searchTerm);
+                    })
+                    ->orWhereHas('hospitalDepartment', function ($dq) use ($searchTerm) {
+                        $dq->where('name', 'like', $searchTerm);
+                    });
+            });
         }
 
-        $doctors = $query->paginate(10);
+        $doctors = $query->get();
+        $groupedDoctors = $doctors->groupBy('hospitalDepartment.name');
 
-        return view('patient.doctors.index', compact('doctors'));
+        return view('patient.doctors.index', compact('groupedDoctors'));
+    }
+
+    /**
+     * Menampilkan semua dokter dalam satu departemen.
+     */
+    public function showDepartment(HospitalDepartment $department)
+    {
+        $doctors = Doctor::with('user')
+            ->where('hospital_department_id', $department->id)
+            ->paginate(12);
+
+        return view('patient.doctors.department', compact('department', 'doctors'));
     }
 
     /**
@@ -35,20 +57,18 @@ class PatientAppController extends Controller
      */
     public function showSchedule(Doctor $doctor)
     {
-        // Ambil jadwal dokter untuk 7 hari ke depan
         $schedules = DoctorSchedule::where('doctor_id', $doctor->id)
-                                    ->get()
-                                    ->groupBy('day_of_week'); // Kelompokkan berdasarkan hari
+            ->get()
+            ->groupBy('day_of_week');
 
         return view('patient.doctors.schedule', compact('doctor', 'schedules'));
     }
 
     /**
-     * Memproses permintaan janji temu.
+     * Mengalihkan permintaan booking ke halaman konfirmasi pembayaran.
      */
     public function bookAppointment(Request $request)
     {
-        // Validasi yang sama seperti di PaymentController::confirm, plus logika antrian
         $request->validate([
             'doctor_id' => 'required|exists:doctors,id',
             'schedule_id' => 'required|exists:doctor_schedules,id',
@@ -56,23 +76,41 @@ class PatientAppController extends Controller
             'reason' => 'nullable|string|max:255',
         ]);
 
-        // Redirect ke halaman konfirmasi
         return redirect()->route('orders.confirm', $request->all());
     }
+
+    /**
+     * Menampilkan daftar semua janji temu untuk Pasien yang sedang login.
+     * Handle kasus jika pasien belum ada atau tidak punya janji temu.
+     */
     public function myAppointments()
     {
-        // 1. Dapatkan model Patient dari user yang sedang login
-        $patient = Patient::where('user_id', Auth::id())->firstOrFail();
+        $patient = Patient::where('user_id', Auth::id())->first();
 
-        // 2. Ambil janji temu dengan relasi Doctor dan Schedule
-        $appointments = $patient->appointments()
-                                ->with(['doctor.user', 'schedule']) // Load data dokter dan jadwal
-                                ->latest() // Tampilkan yang terbaru di atas
-                                ->paginate(10);
+        if (!$patient) {
+            // FIX: Buat Paginator kosong jika pasien tidak ditemukan
+            $appointments = new LengthAwarePaginator(
+                [], // Item kosong
+                0,  // Total item nol
+                10, // Item per halaman (sesuaikan jika perlu)
+                1,  // Halaman saat ini
+                ['path' => request()->url()] // Opsi path, penting agar link paginasi benar
+            );
+        } else {
+            // Jika pasien ditemukan, ambil janji temu dengan paginasi
+            $appointments = $patient->appointments()
+                ->with(['doctor.user', 'schedule'])
+                ->latest('appointment_date') // Urutkan berdasarkan tanggal janji temu
+                ->paginate(10); // paginate() sudah mengembalikan Paginator
+        }
 
+        // Tampilkan view
         return view('patient.appointments.index', compact('appointments'));
     }
 
+    /**
+     * Menghitung nomor antrian yang akan didapatkan pasien saat ini (untuk AJAX).
+     */
     public function calculateQueue(Request $request)
     {
         $request->validate([
@@ -81,17 +119,16 @@ class PatientAppController extends Controller
         ]);
 
         $queueNumber = Appointment::where('schedule_id', $request->schedule_id)
-                                ->where('appointment_date', $request->appointment_date)
-                                ->max('queue_number');
+            ->where('appointment_date', $request->appointment_date)
+            ->whereIn('status', ['scheduled', 'payment_pending'])
+            ->max('queue_number');
 
-        // Jika tidak ada antrian, nomor antrian dimulai dari 1. Jika ada, +1 dari maksimal.
         $nextQueue = ($queueNumber === null) ? 1 : $queueNumber + 1;
 
-        // Mengembalikan respons JSON
         return response()->json([
             'success' => true,
             'queue_number' => $nextQueue,
-            'message' => "Anda akan mendapatkan nomor antrian ke-$nextQueue."
         ]);
     }
 }
+
