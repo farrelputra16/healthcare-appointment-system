@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Doctor;
 use App\Models\Patient;
+use App\Models\Order;
 
 class Appointment extends Model
 {
@@ -19,6 +20,8 @@ class Appointment extends Model
         'queue_number',       // <-- HARUS ADA
         'status',
         'reason',             // <-- HARUS ADA
+        'payment_status',
+        'paid_at',
     ];
 
     public function doctor()
@@ -34,5 +37,10 @@ class Appointment extends Model
     public function schedule()
     {
         return $this->belongsTo(DoctorSchedule::class, 'schedule_id');
+    }
+
+    public function order()
+    {
+        return $this->hasOne(Order::class);
     }
 }

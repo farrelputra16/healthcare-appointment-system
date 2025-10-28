@@ -35,11 +35,11 @@ return [
         ],
     ],
     'payment' => [
-    'api_key' => env('PAYMENT_API_KEY'),
-    'base_url' => env('PAYMENT_BASE_URL'),
-    'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET'),
-    'expired_hours' => env('PAYMENT_EXPIRED_HOURS', 24),
-    'consultation_fee' => env('CONSULTATION_FEE', 50000), // Biaya Konsultasi Dasar
-],
+        'api_key' => env('PAYMENT_API_KEY', 'cuXBMQtMy5bhE2oifScKVLWuxniG6fZZ'),
+        'base_url' => env('PAYMENT_BASE_URL', 'http://payment-dummy.doovera.com/api/v1'),
+        'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET', 'ePXj9V9xK2dVwKTcXVfwgD992RVCSQP9'),
+        'expired_hours' => env('PAYMENT_EXPIRED_HOURS', 24),
+        'consultation_fee' => env('CONSULTATION_FEE', 50000), // Biaya Konsultasi Dasar
+    ],
 
 ];

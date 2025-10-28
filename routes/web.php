@@ -63,16 +63,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/orders/process', [AppointmentPaymentController::class, 'process'])->name('orders.process');
     Route::get('/orders/{order}/waiting', [AppointmentPaymentController::class, 'waiting'])->name('orders.waiting');
     Route::get('/orders/{order}/check-status', [AppointmentPaymentController::class, 'checkStatus'])->name('orders.check-status');
+    Route::get('/orders/{order}/check-va-status', [AppointmentPaymentController::class, 'checkVirtualAccountStatus'])->name('orders.check-va-status');
     Route::get('/orders/{order}/success', [AppointmentPaymentController::class, 'success'])->name('orders.success');
+    Route::get('/orders/{order}/pay', [AppointmentPaymentController::class, 'pay'])->name('orders.pay');
 
     // Janji Temu Saya & Kalkulasi Antrian
     Route::get('/app/my-appointments', [PatientAppController::class, 'myAppointments'])->name('patient.appointments.index');
     Route::post('/app/appointments/calculate-queue', [PatientAppController::class, 'calculateQueue'])->name('patient.appointments.calculate');
+    Route::put('/app/appointments/{appointment}/cancel', [PatientAppController::class, 'cancelAppointment'])->name('patient.appointments.cancel');
 });
 
-Route::resource('payments', PaymentController::class)->except(['create', 'store', 'show', 'edit', 'update', 'destroy']); // Dikosongkan karena tidak dipakai
-
-// Webhook Route (tanpa auth middleware)
-Route::post('/webhook/payment', [WebhookController::class, 'handlePayment'])->name('webhook.payment');
+Route::resource('payments', PaymentController::class)
+    ->only(['index'])
+    ->middleware('role:admin');
 
 require __DIR__ . '/auth.php';

@@ -2,59 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Payment;
+use App\Models\Order;
 use App\Models\Appointment;
+use App\Models\Patient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
     public function index()
     {
-        $payments = Payment::with('appointment')->latest()->get();
-        return view('payments.index', compact('payments'));
-    }
+        $user = Auth::user();
 
-    public function create()
-    {
-        $appointments = Appointment::all();
-        return view('payments.create', compact('appointments'));
-    }
+        if ($user->isAdmin()) {
+            // Admin: daftar semua pasien yang membuat appointment (berdasarkan seeder/appointments table)
+            $appointments = Appointment::with(['patient.user', 'doctor.user'])
+                ->orderByDesc('created_at')
+                ->get();
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'appointment_id' => 'required|exists:appointments,id',
-            'amount' => 'required|numeric|min:0',
-            'method' => 'required|string',
-            'status' => 'required|string',
+            return view('payments.index', [
+                'mode' => 'admin',
+                'appointments' => $appointments,
+            ]);
+        }
+
+        // Patient: tampilkan jumlah yang harus dibayar untuk appointment terbaru yang belum dibayar
+        $patient = Patient::where('user_id', $user->id)->first();
+
+        $orders = collect();
+        if ($patient) {
+            $orders = Order::with(['appointment.doctor.user'])
+                ->where('user_id', $user->id)
+                ->orderByDesc('created_at')
+                ->get();
+        }
+
+        return view('payments.index', [
+            'mode' => 'patient',
+            'orders' => $orders,
         ]);
-
-        Payment::create($request->all());
-        return redirect()->route('payments.index')->with('success', 'Payment created successfully.');
-    }
-
-    public function edit(Payment $payment)
-    {
-        $appointments = Appointment::all();
-        return view('payments.edit', compact('payment', 'appointments'));
-    }
-
-    public function update(Request $request, Payment $payment)
-    {
-        $request->validate([
-            'appointment_id' => 'required|exists:appointments,id',
-            'amount' => 'required|numeric|min:0',
-            'method' => 'required|string',
-            'status' => 'required|string',
-        ]);
-
-        $payment->update($request->all());
-        return redirect()->route('payments.index')->with('success', 'Payment updated successfully.');
-    }
-
-    public function destroy(Payment $payment)
-    {
-        $payment->delete();
-        return redirect()->route('payments.index')->with('success', 'Payment deleted successfully.');
     }
 }

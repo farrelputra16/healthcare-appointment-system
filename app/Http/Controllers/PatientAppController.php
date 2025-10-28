@@ -88,24 +88,59 @@ class PatientAppController extends Controller
         $patient = Patient::where('user_id', Auth::id())->first();
 
         if (!$patient) {
-            // FIX: Buat Paginator kosong jika pasien tidak ditemukan
-            $appointments = new LengthAwarePaginator(
-                [], // Item kosong
-                0,  // Total item nol
-                10, // Item per halaman (sesuaikan jika perlu)
-                1,  // Halaman saat ini
-                ['path' => request()->url()] // Opsi path, penting agar link paginasi benar
-            );
-        } else {
-            // Jika pasien ditemukan, ambil janji temu dengan paginasi
-            $appointments = $patient->appointments()
-                ->with(['doctor.user', 'schedule'])
-                ->latest('appointment_date') // Urutkan berdasarkan tanggal janji temu
-                ->paginate(10); // paginate() sudah mengembalikan Paginator
+            // Create patient record if it doesn't exist
+            $patient = Patient::create([
+                'user_id' => Auth::id(),
+                'date_of_birth' => null,
+                'phone_number' => null,
+                'address' => null,
+            ]);
         }
 
-        // Tampilkan view
+        // Get appointments with pagination
+        $appointments = $patient->appointments()
+            ->with(['doctor.user', 'schedule', 'order'])
+            ->latest('appointment_date')
+            ->paginate(10);
+
         return view('patient.appointments.index', compact('appointments'));
+    }
+
+    /**
+     * Cancel an appointment
+     */
+    public function cancelAppointment(Request $request, Appointment $appointment)
+    {
+        // Check if the appointment belongs to the current user
+        $patient = Patient::where('user_id', Auth::id())->first();
+        
+        if (!$patient) {
+            return redirect()->back()->with('error', 'Patient record not found.');
+        }
+        
+        if ($appointment->patient_id !== $patient->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        // Only allow cancellation for scheduled or payment_pending appointments
+        if (!in_array($appointment->status, ['scheduled', 'payment_pending'])) {
+            return redirect()->back()->with('error', 'Appointment cannot be cancelled.');
+        }
+
+        // Update appointment status
+        $appointment->update([
+            'status' => 'cancelled',
+            'payment_status' => 'cancelled'
+        ]);
+
+        // If there's an associated order, update it too
+        if ($appointment->order) {
+            $appointment->order->update([
+                'payment_status' => 'cancelled'
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Appointment cancelled successfully.');
     }
 
     /**

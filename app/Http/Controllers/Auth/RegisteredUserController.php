@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Patient;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -45,6 +46,17 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'role_id' => $request->role_id, // Simpan ID dari peran yang dipilih
         ]);
+
+        // Create patient record if user registered as patient
+        $patientRole = Role::find($request->role_id);
+        if ($patientRole && $patientRole->name === 'patient') {
+            Patient::create([
+                'user_id' => $user->id,
+                'date_of_birth' => null,
+                'phone_number' => null,
+                'address' => null,
+            ]);
+        }
 
         event(new Registered($user));
 

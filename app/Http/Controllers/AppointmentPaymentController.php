@@ -56,7 +56,19 @@ class AppointmentPaymentController extends Controller
         }
 
         $doctor = Doctor::with('user')->findOrFail($bookingData['doctor_id']);
-        $patient = Patient::where('user_id', Auth::id())->firstOrFail();
+        
+        // Get or create patient record for the current user
+        $patient = Patient::where('user_id', Auth::id())->first();
+        if (!$patient) {
+            // Create patient record if it doesn't exist
+            $patient = Patient::create([
+                'user_id' => Auth::id(),
+                'date_of_birth' => null, // Will be filled later
+                'phone_number' => null, // Will be filled later
+                'address' => null, // Will be filled later
+            ]);
+        }
+        
         $schedule = DoctorSchedule::findOrFail($bookingData['schedule_id']);
 
         $totalAmount = $this->consultationFee;
@@ -96,14 +108,16 @@ class AppointmentPaymentController extends Controller
                 'Accept' => 'application/json',
             ])->post(config('services.payment.base_url') . '/virtual-account/create', [
                 'external_id' => $order->order_number,
-                'amount' => $order->total_amount,
+                'amount' => (int) $order->total_amount,
                 'customer_name' => Auth::user()->name,
                 'customer_email' => Auth::user()->email,
-                'customer_phone' => $patient->phone_number ?? '081234567890',
                 'description' => 'Konsultasi ' . $doctor->user->name . ' (' . $order->order_number . ')',
                 'expired_duration' => $this->expiredHours,
-                'callback_url' => route('orders.success', $order),
-                'metadata' => ['appointment_id' => $appointment->id, 'user_id' => Auth::id()],
+                'metadata' => [
+                    'appointment_id' => $appointment->id, 
+                    'user_id' => Auth::id(),
+                    'order_id' => $order->id
+                ],
             ]);
 
             if ($response->successful()) {
@@ -146,5 +160,94 @@ class AppointmentPaymentController extends Controller
         if (!$order->isPaid()) { return redirect()->route('orders.waiting', $order); }
 
         return view('orders.success', compact('order'));
+    }
+
+    public function pay(Order $order)
+    {
+        if ($order->user_id !== Auth::id()) { abort(403); }
+        if ($order->isPaid()) { return redirect()->route('orders.success', $order); }
+
+        try {
+            $response = Http::withHeaders([
+                'X-API-Key' => config('services.payment.api_key'),
+                'Accept' => 'application/json',
+            ])->post(config('services.payment.base_url') . '/virtual-account/create', [
+                'external_id' => $order->order_number,
+                'amount' => (int) $order->total_amount,
+                'customer_name' => Auth::user()->name,
+                'customer_email' => Auth::user()->email,
+                'description' => 'Pembayaran Janji Temu ' . ($order->appointment?->doctor?->user?->name ?? ''),
+                'expired_duration' => (int) config('services.payment.expired_hours', 24),
+                'metadata' => [
+                    'appointment_id' => $order->appointment_id,
+                    'user_id' => Auth::id(),
+                    'order_id' => $order->id
+                ],
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $order->update([
+                    'va_number' => $data['data']['va_number'] ?? null,
+                    'payment_url' => $data['data']['payment_url'] ?? null,
+                    'payment_status' => 'pending',
+                ]);
+                return redirect()->route('orders.waiting', $order);
+            }
+        } catch (\Exception $e) {
+            // fallthrough to error redirect
+        }
+
+        return redirect()->route('patient.appointments.index')->with('error', 'Gagal memulai pembayaran.');
+    }
+
+    public function checkVirtualAccountStatus(Order $order)
+    {
+        if ($order->user_id !== Auth::id()) { 
+            abort(403); 
+        }
+
+        if (!$order->va_number) {
+            return response()->json(['error' => 'Virtual account not found'], 404);
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'X-API-Key' => config('services.payment.api_key'),
+                'Accept' => 'application/json',
+            ])->get(config('services.payment.base_url') . '/virtual-account/' . $order->va_number . '/status');
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $status = $data['data']['status'] ?? 'pending';
+                
+                // Update order status if changed
+                if ($status === 'paid' && !$order->isPaid()) {
+                    $order->update(['payment_status' => 'paid', 'paid_at' => now()]);
+                    
+                    // Update appointment status
+                    if ($order->appointment_id) {
+                        $appointment = Appointment::find($order->appointment_id);
+                        if ($appointment) {
+                            $appointment->update([
+                                'payment_status' => 'paid',
+                                'paid_at' => now(),
+                                'status' => $appointment->status === 'payment_pending' ? 'scheduled' : $appointment->status,
+                            ]);
+                        }
+                    }
+                }
+                
+                return response()->json([
+                    'status' => $status,
+                    'paid_at' => $order->paid_at?->toISOString()
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Log error but don't fail the request
+            \Log::error('Failed to check VA status: ' . $e->getMessage());
+        }
+
+        return response()->json(['status' => $order->payment_status, 'paid_at' => $order->paid_at?->toISOString()]);
     }
 }

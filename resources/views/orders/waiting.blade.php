@@ -71,12 +71,15 @@
 
         // Auto check payment status every 10 seconds
         setInterval(function() {
-            fetch('{{ route("orders.check-status", $order) }}')
+            fetch('{{ route("orders.check-va-status", $order) }}')
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'paid') {
                         window.location.href = '{{ route("orders.success", $order) }}';
                     }
+                })
+                .catch(error => {
+                    console.error('Error checking payment status:', error);
                 });
         }, 10000);
     </script>

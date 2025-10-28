@@ -14,13 +14,20 @@ class WebhookController extends Controller
         // Log webhook received
         Log::info('Webhook received', $request->all());
 
-        // 1. Verifikasi signature (sesuai kode Anda)
-        $signature = $request->header('X-Webhook-Signature');
+        // 1. Verifikasi signature
         $webhookSecret = config('services.payment.webhook_secret');
-        $payload = $request->all();
-        $expectedSignature = hash_hmac('sha256', json_encode($payload), $webhookSecret);
+        $payload = file_get_contents('php://input');
+        
+        // Try to get signature from header first, then from payload
+        $signature = $request->header('X-Webhook-Signature');
+        if (!$signature) {
+            $payloadData = json_decode($payload, true);
+            $signature = $payloadData['signature'] ?? null;
+        }
+        
+        $expectedSignature = hash_hmac('sha256', $payload, $webhookSecret);
 
-        if (!hash_equals($expectedSignature, $signature)) {
+        if (!$signature || !hash_equals($expectedSignature, $signature)) {
             Log::warning('Invalid webhook signature', ['expected' => $expectedSignature, 'received' => $signature]);
             return response()->json(['error' => 'Invalid signature'], 401);
         }
@@ -43,33 +50,40 @@ class WebhookController extends Controller
                 return response()->json(['message' => 'Already processed'], 200);
             }
 
-            // --- LOGIKA UTAMA MEDIK: UPDATE ORDER STATUS DAN BUAT APPOINTMENT ---
+            // Update ORDER menjadi paid
             $order->update(['payment_status' => 'paid', 'paid_at' => now()]);
 
-            // Di sini Anda HARUS membuat Appointment RESMI.
-            // Data booking awal harusnya disimpan di model Order saat proses.
-            // Logika untuk membuat Appointment dari data yang disimpan di Order diperlukan di sini.
-
-            // Contoh Placeholder:
-            // $bookingData = $order->metadata; // Misal disimpan di metadata
-
-            // Appointment::create([
-            //    'patient_id' => $bookingData['patient_id'],
-            //    ... data lain
-            // ]);
-            // $order->update(['appointment_id' => $newAppointment->id]);
+            // Jika order terkait appointment draft, update payment_status appointment
+            if ($order->appointment_id) {
+                $appointment = Appointment::find($order->appointment_id);
+                if ($appointment) {
+                    $appointment->update([
+                        'payment_status' => 'paid',
+                        'paid_at' => now(),
+                        'status' => $appointment->status === 'payment_pending' ? 'scheduled' : $appointment->status,
+                    ]);
+                }
+            }
 
 
             Log::info('Payment success processed', ['order_id' => $order->id]);
             return response()->json(['message' => 'Webhook processed successfully'], 200);
         }
 
-        // ... (Logika payment.failed dan payment.expired tetap sama) ...
-        if ($event === 'payment.failed' || $event === 'payment.expired') {
+        if ($event === 'payment.expired' || $event === 'payment.cancelled') {
             $externalId = $data['external_id'];
             $order = Order::where('order_number', $externalId)->first();
             if ($order) {
-                $order->update(['payment_status' => $event === 'payment.failed' ? 'failed' : 'expired']);
+                $order->update(['payment_status' => $event === 'payment.cancelled' ? 'cancelled' : 'expired']);
+                if ($order->appointment_id) {
+                    $appointment = Appointment::find($order->appointment_id);
+                    if ($appointment) {
+                        $appointment->update([
+                            'payment_status' => $event === 'payment.cancelled' ? 'cancelled' : 'expired',
+                            'status' => 'cancelled',
+                        ]);
+                    }
+                }
             }
             return response()->json(['message' => 'Webhook processed'], 200);
         }
