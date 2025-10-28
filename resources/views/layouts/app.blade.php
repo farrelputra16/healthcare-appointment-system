@@ -51,12 +51,23 @@
             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h-4M5 20h4M12 10a4 4 0 100-8 4 4 0 000 8zM5 12a7 7 0 0014 0 7 7 0 00-14 0z"></path></svg>
             Users (Management)
         </a>
+        
+        {{-- 2a. Doctor Schedule (Hanya untuk Admin) --}}
+        <a href="{{ route('doctor-schedules.index') }}" class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-4 4V3m-4 14h8M5 10h14a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v4a1 1 0 001 1z"></path></svg>
+            Jadwal Dokter
+        </a>
+        
+        {{-- 2c. Appointment Management (Hanya untuk Admin) --}}
+        <a href="{{ route('appointments.index') }}" class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            Janji Temu
+        </a>
     @endif
 
     {{-- Link Navigasi Lain --}}
     @php
         $navLinks = [
-            ['route' => 'register', 'label' => 'Jadwal Dokter', 'icon' => 'M8 7V3m8 4V3m-4 4V3m-4 14h8M5 10h14a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v4a1 1 0 001 1z'],
             ['route' => 'register', 'label' => 'Rekam Medis', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
         ];
     @endphp

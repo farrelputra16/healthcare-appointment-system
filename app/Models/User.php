@@ -61,4 +61,14 @@ class User extends Authenticatable
     {
         return $this->role_id === 1;
     }
+
+    public function doctor()
+    {
+        return $this->hasOne(Doctor::class);
+    }
+
+    public function patient()
+    {
+        return $this->hasOne(Patient::class);
+    }
 }

@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\DoctorScheduleController;
+use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PatientAppController;
 use App\Http\Controllers\AppointmentPaymentController;
@@ -34,7 +36,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // MANAJEMEN APLIKASI UTAMA
     Route::resource('users', UserController::class)
         ->middleware('role:admin');
+    
+    // MANAJEMEN JADWAL DOKTER
+    Route::resource('doctor-schedules', DoctorScheduleController::class)
+        ->middleware('role:admin');
+    
+    // MANAJEMEN JANJI TEMU
+    Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index')->middleware('role:admin');
+    Route::get('appointments/schedule/{schedule}', [AppointmentController::class, 'showAppointments'])->name('appointments.schedule')->middleware('role:admin');
+    Route::get('appointments/create', [AppointmentController::class, 'create'])->name('appointments.create')->middleware('role:admin');
+    Route::post('appointments', [AppointmentController::class, 'store'])->name('appointments.store')->middleware('role:admin');
+    Route::get('appointments/{appointment}', [AppointmentController::class, 'show'])->name('appointments.show')->middleware('role:admin');
+    Route::post('appointments/{appointment}/update-queue', [AppointmentController::class, 'updateQueue'])->name('appointments.update-queue')->middleware('role:admin');
+    Route::post('appointments/{appointment}/update-status', [AppointmentController::class, 'updateStatus'])->name('appointments.update-status')->middleware('role:admin');
+    Route::delete('appointments/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy')->middleware('role:admin');
 });
+
+// API routes for getting schedules
+Route::get('/api/doctors/{doctor}/schedules', function ($doctor) {
+    $schedules = \App\Models\DoctorSchedule::where('doctor_id', $doctor)->get();
+    return response()->json($schedules);
+})->middleware('auth');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
