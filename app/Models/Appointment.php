@@ -14,11 +14,12 @@ class Appointment extends Model
     protected $fillable = [
         'doctor_id',
         'patient_id',
-        'scheduled_at',
+        'schedule_id',        // <-- HARUS ADA (Memperbaiki error utama)
+        'appointment_date',   // <-- HARUS ADA (Menggantikan 'scheduled_at')
+        'queue_number',       // <-- HARUS ADA
         'status',
+        'reason',             // <-- HARUS ADA
     ];
-
-
 
     public function doctor()
     {
@@ -30,4 +31,8 @@ class Appointment extends Model
         return $this->belongsTo(Patient::class);
     }
 
+    public function schedule()
+    {
+        return $this->belongsTo(DoctorSchedule::class, 'schedule_id');
+    }
 }
