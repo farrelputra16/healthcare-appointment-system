@@ -6,39 +6,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role_id',
+        'role_id', // Pastikan ini role_id, bukan role
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -46,19 +33,42 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    // app/Models/User.php
 
-    public function role()
+    // --- RELASI ---
+
+    public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
     }
-        public function hasPermissionTo($permission)
+
+    public function doctorProfile(): HasOne
     {
-        return $this->role->permissions()->where('name', $permission)->exists();
+        return $this->hasOne(Doctor::class);
+    }
+
+    public function medicalRecords(): HasMany
+    {
+        return $this->hasMany(MedicalRecord::class, 'patient_id');
+    }
+
+    public function hasPermissionTo($permission): bool
+    {
+        return $this->role?->permissions()->where('name', $permission)->exists() ?? false;
     }
 
     public function isAdmin(): bool
     {
-        return $this->role_id === 1;
+        return $this->role?->name === 'admin';
+    }
+}
+
+    public function doctor()
+    {
+        return $this->hasOne(Doctor::class);
+    }
+
+    public function patient()
+    {
+        return $this->hasOne(Patient::class);
     }
 }

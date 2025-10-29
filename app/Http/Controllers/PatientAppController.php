@@ -19,7 +19,9 @@ class PatientAppController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Doctor::with(['user', 'hospitalDepartment']);
+        // Only show doctors that have schedules
+        $query = Doctor::with(['user', 'hospitalDepartment'])
+            ->whereHas('schedules'); // Only doctors with at least one schedule
 
         if ($request->filled('search')) {
             $searchTerm = '%' . $request->search . '%';
@@ -45,8 +47,10 @@ class PatientAppController extends Controller
      */
     public function showDepartment(HospitalDepartment $department)
     {
+        // Only show doctors that have schedules
         $doctors = Doctor::with('user')
             ->where('hospital_department_id', $department->id)
+            ->whereHas('schedules') // Only doctors with at least one schedule
             ->paginate(12);
 
         return view('patient.doctors.department', compact('department', 'doctors'));
