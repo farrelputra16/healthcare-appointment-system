@@ -10,6 +10,7 @@ use App\Http\Controllers\AppointmentPaymentController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\AdminPaymentController;
 use App\Providers\RouteServiceProvider;
+use App\Http\Controllers\MedicalRecordController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -36,10 +37,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('users', UserController::class)
         ->middleware('role:admin');
     
-    // ADMIN PAYMENTS
-    Route::get('/admin/payments', [AdminPaymentController::class, 'index'])
-        ->middleware('role:admin')
-        ->name('admin.payments.index');
+    // Route untuk Medical Records (Admin dan Dokter)
+    Route::resource('medical-records', MedicalRecordController::class);
 });
 
 Route::middleware('auth')->group(function () {
