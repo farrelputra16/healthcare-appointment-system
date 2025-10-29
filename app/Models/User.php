@@ -54,7 +54,7 @@ class User extends Authenticatable
     }
         public function hasPermissionTo($permission)
     {
-        return $this->roles()->first()->permissions()->where('name', $permission)->exists();
+        return $this->role->permissions()->where('name', $permission)->exists();
     }
 
     public function isAdmin(): bool

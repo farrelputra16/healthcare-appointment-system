@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PatientAppController;
 use App\Http\Controllers\AppointmentPaymentController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\AdminPaymentController;
 use App\Providers\RouteServiceProvider;
 
 Route::get('/', function () {
@@ -50,6 +51,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('appointments/{appointment}/update-queue', [AppointmentController::class, 'updateQueue'])->name('appointments.update-queue')->middleware('role:admin');
     Route::post('appointments/{appointment}/update-status', [AppointmentController::class, 'updateStatus'])->name('appointments.update-status')->middleware('role:admin');
     Route::delete('appointments/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy')->middleware('role:admin');
+    
+    // ADMIN PAYMENTS
+    Route::get('/admin/payments', [AdminPaymentController::class, 'index'])
+        ->middleware('role:admin')
+        ->name('admin.payments.index');
 });
 
 // API routes for getting schedules
