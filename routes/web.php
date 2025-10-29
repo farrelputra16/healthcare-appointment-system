@@ -8,6 +8,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PatientAppController;
 use App\Http\Controllers\AppointmentPaymentController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\AdminPaymentController;
 use App\Providers\RouteServiceProvider;
 
 Route::get('/', function () {
@@ -34,6 +35,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // MANAJEMEN APLIKASI UTAMA
     Route::resource('users', UserController::class)
         ->middleware('role:admin');
+    
+    // ADMIN PAYMENTS
+    Route::get('/admin/payments', [AdminPaymentController::class, 'index'])
+        ->middleware('role:admin')
+        ->name('admin.payments.index');
 });
 
 Route::middleware('auth')->group(function () {
