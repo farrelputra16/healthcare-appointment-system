@@ -39,44 +39,54 @@
                 {{-- Link Navigasi --}}
                 <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
 
-    {{-- 1. Dashboard (Selalu terlihat) --}}
-    <a href="{{ route('dashboard') }}" class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150">
-        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l2 2 2-2M15 10v10a1 1 0 01-1 1h-3m-7 0h10a1 1 0 001-1v-10M9 20V10"></path></svg>
-        Dashboard
-    </a>
+                    {{-- 1. Dashboard (Selalu terlihat) --}}
+                    <a href="{{ route('dashboard') }}" 
+                       class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('dashboard') ? 'bg-white/20' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l2 2 2-2M15 10v10a1 1 0 01-1 1h-3m-7 0h10a1 1 0 001-1v-10M9 20V10"></path></svg>
+                        Dashboard
+                    </a>
 
-    {{-- 2. Users (Hanya untuk Admin - Menggunakan logika asli Anda) --}}
-    @if (Auth::user()->isAdmin())
-        <a href="{{ route('users.index') }}" class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h-4M5 20h4M12 10a4 4 0 100-8 4 4 0 000 8zM5 12a7 7 0 0014 0 7 7 0 00-14 0z"></path></svg>
-            Users (Management)
-        </a>
-    @endif
+                    {{-- 2. Users (Hanya untuk Admin) --}}
+                    @if (Auth::user()->isAdmin())
+                        <a href="{{ route('users.index') }}" 
+                           class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('users.*') ? 'bg-white/20' : '' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h-4M5 20h4M12 10a4 4 0 100-8 4 4 0 000 8zM5 12a7 7 0 0014 0 7 7 0 00-14 0z"></path></svg>
+                            Users (Management)
+                        </a>
 
-    {{-- Link Navigasi Lain --}}
-    @php
-        $navLinks = [
-            ['route' => 'register', 'label' => 'Jadwal Dokter', 'icon' => 'M8 7V3m8 4V3m-4 4V3m-4 14h8M5 10h14a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v4a1 1 0 001 1z'],
-            ['route' => 'register', 'label' => 'Rekam Medis', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
-        ];
-    @endphp
-    {{-- 5. Pembayaran --}}
-    <a href="{{ route('payments.index') }}" 
-       class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('payments.*') ? 'bg-white/20' : '' }}">
-        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m-8-2h.01M21 12h-6.25" />
-        </svg>
-        Pembayaran
-    </a>
+                        {{-- 3. Jadwal Dokter (Admin) --}}
+                        <a href="{{ route('doctor-schedules.index') }}" 
+                           class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('doctor-schedules.*') ? 'bg-white/20' : '' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-4 4V3m-4 14h8M5 10h14a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v4a1 1 0 001 1z"></path></svg>
+                            Jadwal Dokter
+                        </a>
 
-    @foreach ($navLinks as $link)
-        <a href="#" class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $link['icon'] }}"></path></svg>
-            {{ $link['label'] }}
-        </a>
-    @endforeach
-</nav>
+                        {{-- 3b. Janji Temu (Admin) --}}
+                        <a href="{{ route('appointments.index') }}" 
+                           class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('appointments.*') ? 'bg-white/20' : '' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                            Janji Temu
+                        </a>
+                    @endif
+
+                    {{-- 4. Rekam Medis --}}
+                    <a href="{{ route('medical-records.index') }}" 
+                       class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('medical-records.*') ? 'bg-white/20' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        Rekam Medis
+                    </a>
+                    
+                    {{-- 5. Pembayaran --}}
+                    <a href="{{ route('payments.index') }}" 
+                       class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('payments.*') ? 'bg-white/20' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m-8-2h.01M21 12h-6.25" />
+                        </svg>
+                        Pembayaran
+                    </a>
+
+                </nav>
                 {{-- Tombol Logout --}}
                 <div class="p-6 border-t border-blue-400/30">
                     <div class="mb-3 text-sm font-semibold">{{ $auth::user()->name }} ({{ $auth::user()->role()->first()->display_name ?? 'User' }})</div>
