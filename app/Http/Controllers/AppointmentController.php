@@ -8,6 +8,8 @@ use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\DoctorSchedule;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AppointmentController extends Controller
 {
@@ -30,14 +32,14 @@ class AppointmentController extends Controller
     public function showAppointments(Request $request, DoctorSchedule $schedule)
     {
         // Get appointment_date from query parameter or session or request
-        $appointmentDate = $request->input('appointment_date') 
-            ?? $request->query('appointment_date') 
+        $appointmentDate = $request->input('appointment_date')
+            ?? $request->query('appointment_date')
             ?? $request->session()->get('appointment_date');
-        
+
         if (!$appointmentDate) {
             return redirect()->route('appointments.index')->withErrors(['error' => 'Tanggal tidak ditemukan.']);
         }
-        
+
         // Get all appointments for this schedule on this date
         $appointments = Appointment::with(['patient.user'])
             ->where('schedule_id', $schedule->id)
@@ -57,11 +59,11 @@ class AppointmentController extends Controller
     {
         $doctors = Doctor::with(['user', 'hospitalDepartment'])->get();
         $patients = Patient::with('user')->get();
-        
+
         // Pre-select schedule and date if provided
         $selectedScheduleId = $request->input('schedule_id');
         $selectedDate = $request->input('appointment_date');
-        
+
         return view('appointments.create', compact('doctors', 'patients', 'selectedScheduleId', 'selectedDate'));
     }
 
@@ -77,7 +79,7 @@ class AppointmentController extends Controller
 
         // Get the schedule to check max patients
         $schedule = DoctorSchedule::findOrFail($validated['schedule_id']);
-        
+
         // Check if max patients reached
         $existingCount = Appointment::where('schedule_id', $validated['schedule_id'])
             ->where('appointment_date', $validated['appointment_date'])
@@ -125,7 +127,7 @@ class AppointmentController extends Controller
     public function updateQueue(Request $request, Appointment $appointment)
     {
         // Log the request for debugging
-        \Log::info('Update Queue Request', [
+        Log::info('Update Queue Request', [
             'appointment_id' => $appointment->id,
             'current_queue' => $appointment->queue_number,
             'new_queue' => $request->queue_number,
@@ -156,17 +158,17 @@ class AppointmentController extends Controller
 
         // If there's a conflict, swap the queue numbers
         if ($existing) {
-            \Log::info('Queue number conflict detected, swapping queue numbers');
-            
+            Log::info('Queue number conflict detected, swapping queue numbers');
+
             // Swap the queue numbers
             $tempQueue = $oldQueueNumber;
             $appointment->queue_number = $newQueueNumber;
             $appointment->save();
-            
+
             $existing->queue_number = $tempQueue;
             $existing->save();
-            
-            \Log::info('Queue swapped successfully', [
+
+            Log::info('Queue swapped successfully', [
                 'appointment_id' => $appointment->id,
                 'new_queue' => $appointment->queue_number,
                 'swapped_with' => $existing->id,
@@ -176,8 +178,8 @@ class AppointmentController extends Controller
             // No conflict, just update
             $appointment->queue_number = $newQueueNumber;
             $appointment->save();
-            
-            \Log::info('Queue updated successfully', [
+
+            Log::info('Queue updated successfully', [
                 'appointment_id' => $appointment->id,
                 'new_queue' => $appointment->queue_number
             ]);
@@ -186,7 +188,7 @@ class AppointmentController extends Controller
         // Redirect back to schedule appointments view with appointment_date in URL
         $scheduleId = $appointment->schedule_id;
         $appointmentDate = $appointment->appointment_date;
-        
+
         return redirect()->to(url()->route('appointments.schedule', ['schedule' => $scheduleId]) . '?appointment_date=' . $appointmentDate)
             ->with('success', 'Nomor antrian berhasil diperbarui.');
     }
@@ -202,7 +204,7 @@ class AppointmentController extends Controller
         // Redirect back to schedule appointments view
         $scheduleId = $appointment->schedule_id;
         $appointmentDate = $appointment->appointment_date;
-        
+
         return redirect()->to(url()->route('appointments.schedule', ['schedule' => $scheduleId]) . '?appointment_date=' . $appointmentDate)
             ->with('success', 'Status janji temu berhasil diperbarui.');
     }
@@ -231,5 +233,26 @@ class AppointmentController extends Controller
         return redirect()->to(url()->route('appointments.schedule', ['schedule' => $scheduleId]) . '?appointment_date=' . $appointmentDate)
             ->with('success', 'Janji temu berhasil dihapus.');
     }
-}
 
+    public function doctorQueue()
+    {
+        $userId = Auth::id();
+
+        $doctor = Doctor::where('user_id', $userId)->first();
+
+        if (!$doctor) {
+            return back()->with('error', 'Data dokter tidak ditemukan.');
+        }
+
+        $doctorId = $doctor->id;
+        $today = now()->format('Y-m-d');
+
+        $appointments = Appointment::with(['patient.user'])
+            ->where('doctor_id', $doctorId)
+            ->whereDate('appointment_date', $today)
+            ->orderBy('queue_number', 'asc')
+            ->get();
+
+        return view('doctors.queue.index', compact('appointments'));
+    }
+}
