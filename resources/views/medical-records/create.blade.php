@@ -41,19 +41,6 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-800 font-medium mb-2">Dokter <span class="text-red-500">*</span></label>
-                    <select name="doctor_id" 
-                        class="w-full border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 focus:border-primary-blue focus:ring-primary-blue" required>
-                        <option value="">Pilih Dokter</option>
-                        @foreach($doctors as $doctor)
-                            <option value="{{ $doctor->id }}" {{ old('doctor_id') == $doctor->id ? 'selected' : '' }}>
-                                {{ $doctor->user->name ?? 'N/A' }} - {{ $doctor->specialty ?? '' }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="mb-4">
                     <label class="block text-gray-800 font-medium mb-2">Janji Temu <span class="text-red-500">*</span></label>
                     <select name="appointment_id" 
                         class="w-full border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 focus:border-primary-blue focus:ring-primary-blue" required>
