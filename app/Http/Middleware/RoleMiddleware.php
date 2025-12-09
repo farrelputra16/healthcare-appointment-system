@@ -22,18 +22,14 @@ class RoleMiddleware
             abort(403, 'Unauthorized.');
         }
 
-        $roleIdMap = [
-            'admin' => 1,
-            'user' => 2,
-            'manager' => 3,
-        ];
+        // Ambil nama role dari relasi role
+        $userRole = $user->role->name ?? null;
 
-        foreach ($roles as $role) {
-            if ($user->role_id == ($roleIdMap[$role] ?? null)) {
-                return $next($request);
-            }
+        if (!$userRole || !in_array($userRole, $roles)) {
+            abort(403, 'You do not have permission to access this page.');
         }
 
-        abort(403, 'You do not have permission to access this page.');
+        return $next($request);
     }
+
 }

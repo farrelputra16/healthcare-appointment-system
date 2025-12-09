@@ -35,14 +35,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('dashboard');
     })->middleware('role:doctor')->name('doctor.dashboard');
 
+    // Halaman jadwal dokter untuk role dokter
+    Route::get('/doctor/my-schedule', [DoctorScheduleController::class, 'mySchedule'])
+        ->name('doctor.my-schedule')
+        ->middleware('role:doctor');
+
+    Route::get('/doctor/queue', [AppointmentController::class, 'doctorQueue'])
+        ->name('doctor.queue')
+        ->middleware('role:doctor');
+
     // MANAJEMEN APLIKASI UTAMA
     Route::resource('users', UserController::class)
         ->middleware('role:admin');
-    
+
     // MANAJEMEN JADWAL DOKTER
     Route::resource('doctor-schedules', DoctorScheduleController::class)
         ->middleware('role:admin');
-    
+
     // MANAJEMEN JANJI TEMU
     Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index')->middleware('role:admin');
     Route::get('appointments/schedule/{schedule}', [AppointmentController::class, 'showAppointments'])->name('appointments.schedule')->middleware('role:admin');
@@ -52,7 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('appointments/{appointment}/update-queue', [AppointmentController::class, 'updateQueue'])->name('appointments.update-queue')->middleware('role:admin');
     Route::post('appointments/{appointment}/update-status', [AppointmentController::class, 'updateStatus'])->name('appointments.update-status')->middleware('role:admin');
     Route::delete('appointments/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy')->middleware('role:admin');
-    
+
     // ADMIN PAYMENTS
     Route::get('/admin/payments', [AdminPaymentController::class, 'index'])
         ->middleware('role:admin')

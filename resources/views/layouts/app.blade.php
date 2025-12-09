@@ -40,7 +40,7 @@
                 <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
 
                     {{-- 1. Dashboard (Selalu terlihat) --}}
-                    <a href="{{ route('dashboard') }}" 
+                    <a href="{{ route('dashboard') }}"
                        class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('dashboard') ? 'bg-white/20' : '' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l2 2 2-2M15 10v10a1 1 0 01-1 1h-3m-7 0h10a1 1 0 001-1v-10M9 20V10"></path></svg>
                         Dashboard
@@ -48,36 +48,58 @@
 
                     {{-- 2. Users (Hanya untuk Admin) --}}
                     @if (Auth::user()->isAdmin())
-                        <a href="{{ route('users.index') }}" 
+                        <a href="{{ route('users.index') }}"
                            class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('users.*') ? 'bg-white/20' : '' }}">
                             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h-4M5 20h4M12 10a4 4 0 100-8 4 4 0 000 8zM5 12a7 7 0 0014 0 7 7 0 00-14 0z"></path></svg>
                             Users (Management)
                         </a>
 
                         {{-- 3. Jadwal Dokter (Admin) --}}
-                        <a href="{{ route('doctor-schedules.index') }}" 
+                        <a href="{{ route('doctor-schedules.index') }}"
                            class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('doctor-schedules.*') ? 'bg-white/20' : '' }}">
                             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-4 4V3m-4 14h8M5 10h14a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v4a1 1 0 001 1z"></path></svg>
                             Jadwal Dokter
                         </a>
 
                         {{-- 3b. Janji Temu (Admin) --}}
-                        <a href="{{ route('appointments.index') }}" 
+                        <a href="{{ route('appointments.index') }}"
                            class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('appointments.*') ? 'bg-white/20' : '' }}">
                             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                             Janji Temu
                         </a>
                     @endif
 
+                    {{-- 3c. Jadwal Saya (Hanya untuk Dokter) --}}
+                    @if (Auth::user()->role->name === 'doctor')
+                        <a href="{{ route('doctor.my-schedule') }}"
+                        class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('doctor.my-schedule') ? 'bg-white/20' : '' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-4 4V3m-4 14h8M5 10h14"/>
+                            </svg>
+                            Jadwal Saya
+                        </a>
+
+                        <a href="{{ route('doctor.queue') }}"
+                        class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150
+                        {{ request()->routeIs('doctor.queue') ? 'bg-white/20' : '' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 7h18M3 12h18M3 17h18" />
+                            </svg>
+                            Antrian Pasien
+                        </a>
+                    @endif
+
                     {{-- 4. Rekam Medis --}}
-                    <a href="{{ route('medical-records.index') }}" 
+                    <a href="{{ route('medical-records.index') }}"
                        class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('medical-records.*') ? 'bg-white/20' : '' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                         Rekam Medis
                     </a>
-                    
+
                     {{-- 5. Pembayaran --}}
-                    <a href="{{ route('payments.index') }}" 
+                    <a href="{{ route('payments.index') }}"
                        class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('payments.*') ? 'bg-white/20' : '' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
