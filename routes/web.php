@@ -35,14 +35,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('dashboard');
     })->middleware('role:doctor')->name('doctor.dashboard');
 
-    // Halaman jadwal dokter untuk role dokter
+    // Halaman Jadwal Dokter untuk Role DOkter
     Route::get('/doctor/my-schedule', [DoctorScheduleController::class, 'mySchedule'])
         ->name('doctor.my-schedule')
         ->middleware('role:doctor');
 
-    Route::get('/doctor/queue', [AppointmentController::class, 'doctorQueue'])
-        ->name('doctor.queue')
+    // Halaman Detail Jadwal (Antrian) untuk Role Dokter
+    Route::get('/doctor/my-schedule/{schedule_id}', [DoctorScheduleController::class, 'queueSchedule'])
+        ->name('doctor.queue-schedule')
         ->middleware('role:doctor');
+
+    // Halaman Antrian untuk Role Dokter
+    // Route::get('/doctor/queue', [AppointmentController::class, 'doctorQueue'])
+    //     ->name('doctor.queue')
+    //     ->middleware('role:doctor');
 
     // MANAJEMEN APLIKASI UTAMA
     Route::resource('users', UserController::class)

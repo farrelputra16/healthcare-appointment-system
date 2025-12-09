@@ -23,6 +23,7 @@
                             <th class="border-b px-6 py-3 text-sm font-semibold text-gray-700">Hari</th>
                             <th class="border-b px-6 py-3 text-sm font-semibold text-gray-700">Waktu</th>
                             <th class="border-b px-6 py-3 text-sm font-semibold text-gray-700">Status</th>
+                            <th class="border-b px-6 py-3 text-sm font-semibold text-gray-700 text-center">Aksi</th>
                         </tr>
                     </thead>
 
@@ -53,6 +54,13 @@
                                             Akan Datang
                                         </span>
                                     @endif
+                                </td>
+
+                                <td class="border-b px-6 py-4 text-sm text-center">
+                                    <a href="{{ route('doctor.queue-schedule', $s->id) }}"
+                                    class="bg-blue-600 text-white px-4 py-1 rounded-md text-xs font-semibold shadow hover:bg-blue-700">
+                                        Lihat Antrian
+                                    </a>
                                 </td>
                             </tr>
                         @empty

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DoctorSchedule;
+use App\Models\Appointment;
 use App\Models\Doctor;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -83,20 +84,17 @@ class DoctorScheduleController extends Controller
 
         $schedules = DoctorSchedule::where('doctor_id', $doctorId)->get();
 
-        // Waktu sekarang
-        $now = Carbon::now();                 // contoh: 2025-12-10 14:30
-        $currentDay = strtolower($now->format('l'));  // "wednesday"
-        $currentTime = $now->format('H:i');   // "14:30"
+        $now = Carbon::now();
+        $currentDay = strtolower($now->format('l'));
+        $currentTime = $now->format('H:i');
 
         foreach ($schedules as $schedule) {
-            $scheduleDay = strtolower($schedule->day);       // misal "monday"
-            $start = $schedule->start_time;                  // "09:00"
-            $end   = $schedule->end_time;                    // "12:00"
+            $scheduleDay = strtolower($schedule->day);
+            $start = $schedule->start_time;
+            $end   = $schedule->end_time;
 
-            // Default
             $status = 'akan datang';
 
-            // 1. Jika hari sama
             if ($scheduleDay === $currentDay) {
                 if ($currentTime >= $start && $currentTime <= $end) {
                     $status = 'berjalan';
@@ -104,15 +102,31 @@ class DoctorScheduleController extends Controller
                     $status = 'selesai';
                 }
             }
-            // 2. Jika hari sudah lewat (misal sekarang Rabu, jadwal Senin)
             elseif (Carbon::parse($scheduleDay)->dayOfWeek < $now->dayOfWeek) {
                 $status = 'selesai';
             }
 
-            // Tambahkan atribut status ke setiap object schedule
             $schedule->status = $status;
         }
 
         return view('doctors.schedule.index', compact('schedules'));
+    }
+
+    public function queueSchedule($schedule_id)
+    {
+        // dd($schedule_id);
+        $appointments = Appointment::where('schedule_id', $schedule_id)
+            ->orderBy('queue_number', 'asc')
+            ->with(['patient.user'])
+            ->get();
+
+        $schedule = DoctorSchedule::find($schedule_id);
+
+        if (!$schedule) {
+            return redirect()->route('doctor.my-schedule')
+                ->with('success', 'Jadwal tidak ditemukan.');
+        }
+
+        return view('doctors.schedule.queue', compact('appointments', 'schedule'));
     }
 }
