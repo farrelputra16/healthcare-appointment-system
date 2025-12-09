@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\MedicalRecord;
 use App\Models\Patient;
-use App\Models\Doctor;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class MedicalRecordController extends Controller
 {
@@ -15,9 +15,14 @@ class MedicalRecordController extends Controller
      */
     public function index()
     {
-        $medicalRecords = MedicalRecord::with(['patient.user', 'doctor.user', 'appointment'])
-            ->latest()
-            ->paginate(10);
+        $query = MedicalRecord::with(['patient.user', 'doctor.user', 'appointment'])->latest();
+
+        if (!Auth::user()->isAdmin()) {
+            $doctorId = Auth::user()->doctor->id ?? null;
+            $query->where('doctor_id', $doctorId);
+        }
+
+        $medicalRecords = $query->paginate(10);
         
         return view('medical-records.index', compact('medicalRecords'));
     }
@@ -28,10 +33,16 @@ class MedicalRecordController extends Controller
     public function create()
     {
         $patients = Patient::with('user')->get();
-        $doctors = Doctor::with('user')->get();
-        $appointments = Appointment::with(['patient.user', 'doctor.user'])->get();
+        $appointmentsQuery = Appointment::with(['patient.user', 'doctor.user']);
+
+        if (!Auth::user()->isAdmin()) {
+            $doctorId = Auth::user()->doctor->id ?? null;
+            $appointmentsQuery->where('doctor_id', $doctorId);
+        }
+
+        $appointments = $appointmentsQuery->get();
         
-        return view('medical-records.create', compact('patients', 'doctors', 'appointments'));
+        return view('medical-records.create', compact('patients', 'appointments'));
     }
 
     /**
@@ -39,23 +50,30 @@ class MedicalRecordController extends Controller
      */
     public function store(Request $request)
     {
+        $doctorId = Auth::user()->doctor->id ?? null;
+
         $validatedData = $request->validate([
             'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
             'appointment_id' => 'required|exists:appointments,id',
             'diagnosis' => 'required|string|max:255',
             'notes' => 'nullable|string',
         ], [
             'patient_id.required' => 'Pasien harus dipilih.',
             'patient_id.exists' => 'Pasien yang dipilih tidak valid.',
-            'doctor_id.required' => 'Dokter harus dipilih.',
-            'doctor_id.exists' => 'Dokter yang dipilih tidak valid.',
             'appointment_id.required' => 'Janji temu harus dipilih.',
             'appointment_id.exists' => 'Janji temu yang dipilih tidak valid.',
             'diagnosis.required' => 'Diagnosis harus diisi.',
             'diagnosis.string' => 'Diagnosis harus berupa teks.',
             'notes.string' => 'Catatan harus berupa teks.',
         ]);
+
+        if (!$doctorId) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Dokter tidak ditemukan untuk akun ini.');
+        }
+
+        $validatedData['doctor_id'] = $doctorId;
 
         try {
             MedicalRecord::create($validatedData);
@@ -85,10 +103,16 @@ class MedicalRecordController extends Controller
     public function edit(MedicalRecord $medicalRecord)
     {
         $patients = Patient::with('user')->get();
-        $doctors = Doctor::with('user')->get();
-        $appointments = Appointment::with(['patient.user', 'doctor.user'])->get();
+        $appointmentsQuery = Appointment::with(['patient.user', 'doctor.user']);
+
+        if (!Auth::user()->isAdmin()) {
+            $doctorId = Auth::user()->doctor->id ?? null;
+            $appointmentsQuery->where('doctor_id', $doctorId);
+        }
+
+        $appointments = $appointmentsQuery->get();
         
-        return view('medical-records.edit', compact('medicalRecord', 'patients', 'doctors', 'appointments'));
+        return view('medical-records.edit', compact('medicalRecord', 'patients', 'appointments'));
     }
 
     /**
@@ -96,23 +120,30 @@ class MedicalRecordController extends Controller
      */
     public function update(Request $request, MedicalRecord $medicalRecord)
     {
+        $doctorId = Auth::user()->doctor->id ?? null;
+
         $validatedData = $request->validate([
             'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
             'appointment_id' => 'required|exists:appointments,id',
             'diagnosis' => 'required|string|max:255',
             'notes' => 'nullable|string',
         ], [
             'patient_id.required' => 'Pasien harus dipilih.',
             'patient_id.exists' => 'Pasien yang dipilih tidak valid.',
-            'doctor_id.required' => 'Dokter harus dipilih.',
-            'doctor_id.exists' => 'Dokter yang dipilih tidak valid.',
             'appointment_id.required' => 'Janji temu harus dipilih.',
             'appointment_id.exists' => 'Janji temu yang dipilih tidak valid.',
             'diagnosis.required' => 'Diagnosis harus diisi.',
             'diagnosis.string' => 'Diagnosis harus berupa teks.',
             'notes.string' => 'Catatan harus berupa teks.',
         ]);
+
+        if (!$doctorId) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Dokter tidak ditemukan untuk akun ini.');
+        }
+
+        $validatedData['doctor_id'] = $doctorId;
 
         try {
             $medicalRecord->update($validatedData);
