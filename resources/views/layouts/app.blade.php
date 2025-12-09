@@ -61,15 +61,25 @@
                             Jadwal Dokter
                         </a>
 
-                        {{-- 3b. Janji Temu (Admin) --}}
+                        {{-- 4. Janji Temu (Admin) --}}
                         <a href="{{ route('appointments.index') }}"
                            class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('appointments.*') ? 'bg-white/20' : '' }}">
                             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                             Janji Temu
                         </a>
+
+                        {{-- 5. Pembayaran --}}
+                        <a href="{{ route('admin.payments.index') }}"
+                        class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('payments.*') ? 'bg-white/20' : '' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m-8-2h.01M21 12h-6.25" />
+                            </svg>
+                            Pembayaran
+                        </a>
                     @endif
 
-                    {{-- 3c. Jadwal Saya (Hanya untuk Dokter) --}}
+                    {{-- 6. Jadwal Saya (Hanya untuk Dokter) --}}
                     @if (Auth::user()->role->name === 'doctor')
                         <a href="{{ route('doctor.my-schedule') }}"
                         class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('doctor.my-schedule') ? 'bg-white/20' : '' }}">
@@ -79,7 +89,7 @@
                             Jadwal Saya
                         </a>
 
-                        <a href="{{ route('doctor.queue') }}"
+                        {{-- <a href="{{ route('doctor.queue') }}"
                         class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150
                         {{ request()->routeIs('doctor.queue') ? 'bg-white/20' : '' }}">
                             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -88,24 +98,14 @@
                                     d="M3 7h18M3 12h18M3 17h18" />
                             </svg>
                             Antrian Pasien
-                        </a>
+                        </a> --}}
                     @endif
 
-                    {{-- 4. Rekam Medis --}}
+                    {{-- 7. Rekam Medis --}}
                     <a href="{{ route('medical-records.index') }}"
                        class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('medical-records.*') ? 'bg-white/20' : '' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                         Rekam Medis
-                    </a>
-
-                    {{-- 5. Pembayaran --}}
-                    <a href="{{ route('admin.payments.index') }}"
-                       class="flex items-center p-3 rounded-lg text-sm font-medium hover:bg-white/10 transition duration-150 {{ request()->routeIs('payments.*') ? 'bg-white/20' : '' }}">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m-8-2h.01M21 12h-6.25" />
-                        </svg>
-                        Pembayaran
                     </a>
 
                 </nav>
