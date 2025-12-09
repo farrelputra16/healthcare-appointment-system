@@ -13,6 +13,7 @@ use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\AdminPaymentController;
 use App\Providers\RouteServiceProvider;
 use App\Http\Controllers\MedicalRecordController;
+use App\Http\Controllers\Patient\PatientMedicalRecordController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -109,6 +110,10 @@ Route::middleware(['auth'])->group(function () {
     // Janji Temu Saya & Kalkulasi Antrian
     Route::get('/app/my-appointments', [PatientAppController::class, 'myAppointments'])->name('patient.appointments.index');
     Route::post('/app/appointments/calculate-queue', [PatientAppController::class, 'calculateQueue'])->name('patient.appointments.calculate');
+
+    // --- BARU: Melihat Catatan Medis Pasien ---
+    Route::get('/app/appointments/{appointment}/medical-record', [PatientMedicalRecordController::class, 'show'])
+        ->name('patient.medical-records.show'); // Nama route ini akan digunakan
 });
 
 Route::resource('payments', PaymentController::class)->except(['create', 'store', 'show', 'edit', 'update', 'destroy']); // Dikosongkan karena tidak dipakai

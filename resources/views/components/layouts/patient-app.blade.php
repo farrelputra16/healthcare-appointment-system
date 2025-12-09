@@ -26,7 +26,7 @@
 
     {{-- HEADER (NAVIGASI) --}}
     <header class="bg-white shadow-md sticky top-0 z-10">
-        <div class="max-w-4xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div class="max-w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
 
             {{-- Logo / Judul Aplikasi --}}
             <a href="{{ route('patient.doctors.index') }}">
@@ -82,7 +82,7 @@
 
     {{-- KONTEN UTAMA --}}
     <main class="py-10">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
             {{-- Slot Header Halaman --}}
             @if (isset($header))
                 <header class="mb-8">
