@@ -14,7 +14,8 @@ use App\Http\Controllers\AdminPaymentController;
 use App\Providers\RouteServiceProvider;
 use App\Http\Controllers\MedicalRecordController;
 use App\Http\Controllers\PatientMedicalRecordController;
-use App\Http\Controllers\DoctorAppointmentController; // Pastikan import ini benar (sesuaikan namespace Anda)
+use App\Http\Controllers\DoctorAppointmentController;
+use App\Http\Controllers\DashboardController; // <-- PASTIKAN INI DI-IMPORT
 
 Route::get('/', function () {
     return view('welcome');
@@ -29,13 +30,13 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // DASHBOARD BERDASARKAN PERAN
-    Route::get('/admin/dashboard', function () {
-        return view('dashboard');
-    })->middleware('role:admin')->name('admin.dashboard');
+    // PERUBAHAN: Mengarahkan ke method Controller yang spesifik
+    Route::get('/admin/dashboard', [DashboardController::class, 'showAdminDashboard'])
+        ->middleware('role:admin')->name('admin.dashboard');
 
-    Route::get('/doctor/dashboard', function () {
-        return view('dashboard');
-    })->middleware('role:doctor')->name('doctor.dashboard');
+    Route::get('/doctor/dashboard', [DashboardController::class, 'showDoctorDashboard'])
+        ->middleware('role:doctor')->name('doctor.dashboard');
+    // END PERUBAHAN DASHBOARD
 
     // Halaman Jadwal Dokter untuk Role DOkter
     Route::get('/doctor/my-schedule', [DoctorScheduleController::class, 'mySchedule'])
