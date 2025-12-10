@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Doctor;
 use App\Models\Patient;
+use App\Models\DoctorSchedule; // <-- Tambahkan import ini
 
 class Appointment extends Model
 {
@@ -14,11 +15,19 @@ class Appointment extends Model
     protected $fillable = [
         'doctor_id',
         'patient_id',
-        'schedule_id',        // <-- HARUS ADA (Memperbaiki error utama)
-        'appointment_date',   // <-- HARUS ADA (Menggantikan 'scheduled_at')
-        'queue_number',       // <-- HARUS ADA
+        'schedule_id',
+        'appointment_date',
+        'queue_number',
         'status',
-        'reason',             // <-- HARUS ADA
+        'reason',
+    ];
+
+    // TAMBAHKAN ATAU MODIFIKASI ARRAY $casts INI
+    protected $casts = [
+        // Mengubah string 'appointment_date' menjadi objek Carbon
+        'appointment_date' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function doctor()
@@ -33,6 +42,12 @@ class Appointment extends Model
 
     public function schedule()
     {
+        // Pastikan relasi ini menggunakan Model DoctorSchedule yang sudah diimpor
         return $this->belongsTo(DoctorSchedule::class, 'schedule_id');
     }
+    public function medicalRecord()
+{
+    // Karena medical_records memiliki appointment_id
+    return $this->hasOne(\App\Models\MedicalRecord::class, 'appointment_id');
+}
 }

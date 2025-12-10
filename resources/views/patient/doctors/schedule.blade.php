@@ -52,11 +52,19 @@
                             <div class="space-y-3">
                                 {{-- Loop Jam Praktik untuk Hari Ini --}}
                                 @foreach ($daySchedules as $schedule)
+                                    @php
+                                        // Hitung Kuota Tersisa (Max - Sudah Dipesan)
+                                        $remainingQuota = $schedule->max_patients - $schedule->booked_count;
+                                        $quotaStatus = $remainingQuota > 0 ? 'text-gray-600' : 'text-red-500 font-bold';
+                                        $quotaText = $remainingQuota > 0 ? $remainingQuota : 'Habis';
+                                    @endphp
                                     <div class="bg-blue-100/50 border border-primary-blue/30 rounded-lg p-3 text-center transition hover:bg-blue-200/70 cursor-pointer">
                                         <p class="font-bold text-gray-800 text-md">
                                             {{ substr($schedule->start_time, 0, 5) }} - {{ substr($schedule->end_time, 0, 5) }}
                                         </p>
-                                        <p class="text-xs text-gray-600 mt-1 font-medium">Kuota Tersisa: **{{ $schedule->max_patients }}**</p>
+                                        <p class="text-xs mt-1 font-medium {{ $quotaStatus }}">
+                                            Kuota Tersisa: **{{ $quotaText }}**
+                                        </p>
                                     </div>
                                 @endforeach
                             </div>

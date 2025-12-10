@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Patient; // Perhatikan namespace ini
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
-use App\Models\MedicalRecord; // Tidak diperlukan karena diambil dari Appointment, tapi baik untuk kejelasan
+use App\Models\MedicalRecord;
+use App\Models\Patient; // <-- Pastikan model Patient di-import
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,23 +16,29 @@ class PatientMedicalRecordController extends Controller
      */
     public function show(Appointment $appointment)
     {
-        // 1. Otorisasi: Pastikan janji temu ini milik pasien yang sedang login
-        // Appointment->patient_id harus sama dengan ID user yang sedang login
-        if ($appointment->patient_id !== Auth::id()) {
+        // 1. Ambil profil Patient yang terkait dengan User yang sedang login (Auth::id())
+        $loggedInPatient = Patient::where('user_id', Auth::id())->first();
+
+        // 2. Cek apakah pengguna memiliki profil pasien
+        if (!$loggedInPatient) {
+            abort(403, 'Akses Ditolak. Anda tidak memiliki profil pasien yang valid.');
+        }
+
+        // 3. Otorisasi: Bandingkan patient_id di appointment dengan ID Patient yang login
+        // patient_id (di appointments) HARUS sama dengan $loggedInPatient->id (dari tabel patients)
+        if ($appointment->patient_id !== $loggedInPatient->id) {
             abort(403, 'Akses Ditolak. Janji Temu ini bukan milik Anda.');
         }
 
-        // 2. Ambil Medical Record yang terkait dengan appointment
-        // Karena Appointment memiliki relasi belongsTo MedicalRecord (melalui 'appointment_id' di MedicalRecord)
+        // 4. Ambil Medical Record yang terkait
         $record = $appointment->medicalRecord;
 
-        // 3. Cek ketersediaan catatan medis
+        // 5. Cek ketersediaan catatan medis
         if (!$record) {
-            // Bisa menggunakan view terpisah atau redirect dengan pesan error
             return redirect()->route('patient.appointments.index')->with('error', 'Catatan Medis untuk janji temu ini belum tersedia atau belum diisi oleh dokter.');
         }
 
-        // 4. Tampilkan view
+        // 6. Tampilkan view
         return view('patient.medical-records.show', compact('record', 'appointment'));
     }
 }

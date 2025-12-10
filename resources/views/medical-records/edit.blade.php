@@ -28,45 +28,44 @@
                 @csrf
                 @method('PUT')
 
+                {{-- 1. PASIEN (Dikunci, Nilai dari $medicalRecord) --}}
                 <div class="mb-4">
-                    <label class="block text-gray-800 font-medium mb-2">Pasien <span class="text-red-500">*</span></label>
-                    <select name="patient_id" 
-                        class="w-full border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 focus:border-primary-blue focus:ring-primary-blue" required>
-                        <option value="">Pilih Pasien</option>
-                        @foreach($patients as $patient)
-                            <option value="{{ $patient->id }}" {{ old('patient_id', $medicalRecord->patient_id) == $patient->id ? 'selected' : '' }}>
-                                {{ $patient->user->name ?? 'N/A' }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <label class="block text-gray-800 font-medium mb-2">Pasien</label>
+                    <input type="text"
+                        value="{{ $medicalRecord->patient->user->name ?? 'N/A' }}"
+                        class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 text-gray-700 focus:ring-0"
+                        disabled>
+                    {{-- Hidden input untuk memastikan ID Pasien dikirim saat PUT --}}
+                    <input type="hidden" name="patient_id" value="{{ $medicalRecord->patient_id }}">
                 </div>
 
+                {{-- 2. JANJI TEMU (Dikunci, Nilai dari $medicalRecord) --}}
                 <div class="mb-4">
-                    <label class="block text-gray-800 font-medium mb-2">Janji Temu <span class="text-red-500">*</span></label>
-                    <select name="appointment_id" 
-                        class="w-full border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 focus:border-primary-blue focus:ring-primary-blue" required>
-                        <option value="">Pilih Janji Temu</option>
-                        @foreach($appointments as $appointment)
-                            <option value="{{ $appointment->id }}" {{ old('appointment_id', $medicalRecord->appointment_id) == $appointment->id ? 'selected' : '' }}>
-                                {{ $appointment->patient->user->name ?? 'N/A' }} dengan Dr. {{ $appointment->doctor->user->name ?? 'N/A' }} 
-                                ({{ $appointment->appointment_date ? \Carbon\Carbon::parse($appointment->appointment_date)->format('d M Y') : 'N/A' }})
-                            </option>
-                        @endforeach
-                    </select>
+                    <label class="block text-gray-800 font-medium mb-2">Janji Temu</label>
+                    <input type="text"
+                        value="{{ $medicalRecord->appointment->patient->user->name ?? 'N/A' }} dengan Dr. {{ $medicalRecord->appointment->doctor->user->name ?? 'N/A' }} ({{ $medicalRecord->appointment->appointment_date->format('d M Y') }})"
+                        class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 text-gray-700 focus:ring-0"
+                        disabled>
+                    {{-- Hidden input untuk memastikan ID Appointment dikirim saat PUT --}}
+                    <input type="hidden" name="appointment_id" value="{{ $medicalRecord->appointment_id }}">
                 </div>
 
+                {{-- 3. DIAGNOSIS --}}
                 <div class="mb-4">
                     <label class="block text-gray-800 font-medium mb-2">Diagnosis <span class="text-red-500">*</span></label>
                     <input type="text" name="diagnosis" value="{{ old('diagnosis', $medicalRecord->diagnosis) }}"
-                        class="w-full border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 focus:border-primary-blue focus:ring-primary-blue" 
+                        class="w-full border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 focus:border-primary-blue focus:ring-primary-blue"
                         placeholder="Masukkan diagnosis" required>
+                    @error('diagnosis') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                {{-- 4. CATATAN --}}
                 <div class="mb-6">
                     <label class="block text-gray-800 font-medium mb-2">Catatan</label>
                     <textarea name="notes" rows="5"
                         class="w-full border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 focus:border-primary-blue focus:ring-primary-blue"
                         placeholder="Masukkan catatan tambahan (opsional)">{{ old('notes', $medicalRecord->notes) }}</textarea>
+                    @error('notes') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="flex justify-end space-x-4">

@@ -18,6 +18,13 @@ class MedicalRecord extends Model
         'diagnosis',
     ];
 
+    // TAMBAH: Mengonversi kolom waktu menjadi objek Carbon (DateTime)
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        // Jika MedicalRecord punya kolom date/time lain, tambahkan di sini
+    ];
+
     // Relasi ke PASIEN
     public function patient(): BelongsTo
     {

@@ -21,7 +21,6 @@ class AppointmentPaymentController extends Controller
     public function __construct()
     {
         $this->consultationFee = config('services.payment.consultation_fee', 50000);
-        // FIX: Tambahkan (int) untuk memastikan Carbon menerima integer
         $this->expiredHours = (int) config('services.payment.expired_hours', 24);
     }
 
@@ -86,10 +85,10 @@ class AppointmentPaymentController extends Controller
             'price' => $totalAmount,
             'total_amount' => $totalAmount,
             'payment_status' => 'pending',
-            'expired_at' => now()->addHours($this->expiredHours), // Nilai sekarang sudah INTEGER
+            'expired_at' => now()->addHours($this->expiredHours),
         ]);
 
-        // 3. Panggil API Payment Gateway (Doovera)
+        // 3. Panggil API Payment Gateway (Doovera) - TETAP JALAN NORMAL
         try {
             $response = Http::withHeaders([
                 'X-API-Key' => config('services.payment.api_key'),
@@ -102,7 +101,8 @@ class AppointmentPaymentController extends Controller
                 'customer_phone' => $patient->phone_number ?? '081234567890',
                 'description' => 'Konsultasi ' . $doctor->user->name . ' (' . $order->order_number . ')',
                 'expired_duration' => $this->expiredHours,
-                'callback_url' => route('orders.success', $order),
+                // Gunakan callback yang normal, karena kita akan paksa status di checkStatus
+                'callback_url' => route('orders.waiting', $order),
                 'metadata' => ['appointment_id' => $appointment->id, 'user_id' => Auth::id()],
             ]);
 
@@ -111,16 +111,17 @@ class AppointmentPaymentController extends Controller
 
                 $order->update(['va_number' => $data['data']['va_number'], 'payment_url' => $data['data']['payment_url']]);
                 Session::forget('booking_data');
+                // Redirect ke halaman waiting untuk pemantauan status
                 return redirect()->route('orders.waiting', $order);
             } else {
                 $appointment->delete();
                 $order->update(['payment_status' => 'failed']);
-                return redirect()->route('patient.doctors.index')->with('error', 'Gagal membuat VA.');
+                return redirect()->route('patient.doctors.index')->with('error', 'Gagal membuat VA. Respon: ' . $response->body());
             }
         } catch (\Exception $e) {
             $appointment->delete();
             $order->update(['payment_status' => 'failed']);
-            return redirect()->route('patient.doctors.index')->with('error', 'Terjadi kesalahan sistem.');
+            return redirect()->route('patient.doctors.index')->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }
 
@@ -136,6 +137,20 @@ class AppointmentPaymentController extends Controller
     public function checkStatus(Order $order)
     {
         if ($order->user_id !== Auth::id()) { abort(403); }
+
+        // ==========================================================
+        // DEBUGGING CHECKSTATUS BYPASS (Aktif HANYA untuk APP_ENV=local)
+        // Ini akan memaksa status PAID saat JavaScript me-refresh setiap 10 detik.
+        // ==========================================================
+        if (app()->environment('local') && $order->payment_status === 'pending') {
+            // Update status ke paid (simulasi webhook)
+            $order->update(['payment_status' => 'paid', 'paid_at' => now()]);
+            // Penting: Update status appointment juga
+            $order->appointment->update(['status' => 'scheduled']);
+
+            return response()->json(['status' => 'paid', 'paid_at' => now()->toISOString()]);
+        }
+        // ==========================================================
 
         return response()->json(['status' => $order->payment_status, 'paid_at' => $order->paid_at?->toISOString()]);
     }

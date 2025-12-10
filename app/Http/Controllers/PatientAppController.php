@@ -10,7 +10,7 @@ use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Pagination\LengthAwarePaginator; // <-- TAMBAHKAN USE STATEMENT INI
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class PatientAppController extends Controller
 {
@@ -103,7 +103,8 @@ class PatientAppController extends Controller
         } else {
             // Jika pasien ditemukan, ambil janji temu dengan paginasi
             $appointments = $patient->appointments()
-                ->with(['doctor.user', 'schedule'])
+                // TAMBAH: Memuat relasi medicalRecord untuk check status di view
+                ->with(['doctor.user', 'schedule', 'medicalRecord'])
                 ->latest('appointment_date') // Urutkan berdasarkan tanggal janji temu
                 ->paginate(10); // paginate() sudah mengembalikan Paginator
         }
@@ -122,11 +123,12 @@ class PatientAppController extends Controller
             'appointment_date' => 'required|date',
         ]);
 
+        // PERBAIKAN UTAMA: Hapus filter status. Kita butuh MAX queue_number yang pernah dikeluarkan.
         $queueNumber = Appointment::where('schedule_id', $request->schedule_id)
             ->where('appointment_date', $request->appointment_date)
-            ->whereIn('status', ['scheduled', 'payment_pending'])
             ->max('queue_number');
 
+        // Jika tidak ada antrian (null), mulai dari 1. Jika ada (misalnya 2), lanjutkan ke 3.
         $nextQueue = ($queueNumber === null) ? 1 : $queueNumber + 1;
 
         return response()->json([
@@ -134,5 +136,34 @@ class PatientAppController extends Controller
             'queue_number' => $nextQueue,
         ]);
     }
-}
 
+    /**
+     * Membatalkan Janji Temu Pasien yang sedang login.
+     */
+    public function cancelAppointment(Appointment $appointment)
+    {
+        // 1. Otorisasi: Pastikan janji temu ini milik pasien yang sedang login
+        $patient = Patient::where('user_id', Auth::id())->first();
+
+        if (!$patient || $appointment->patient_id !== $patient->id) {
+            return redirect()->back()->with('error', 'Akses ditolak. Janji temu ini bukan milik Anda.');
+        }
+
+        // 2. Batasi Pembatalan: Hanya boleh membatalkan jika statusnya 'scheduled'
+        if ($appointment->status !== 'scheduled') {
+            return redirect()->back()->with('error', 'Janji temu hanya dapat dibatalkan jika statusnya SCHEDULED.');
+        }
+
+        // 3. Update Status
+        try {
+            $appointment->update(['status' => 'cancelled']);
+
+            // Opsional: Implementasikan logika refund jika pembayaran sudah dilakukan
+            // ...
+
+            return redirect()->route('patient.appointments.index')->with('success', 'Janji temu berhasil dibatalkan.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal membatalkan janji temu karena kesalahan sistem.');
+        }
+    }
+}

@@ -13,7 +13,8 @@ use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\AdminPaymentController;
 use App\Providers\RouteServiceProvider;
 use App\Http\Controllers\MedicalRecordController;
-use App\Http\Controllers\Patient\PatientMedicalRecordController;
+use App\Http\Controllers\PatientMedicalRecordController;
+use App\Http\Controllers\DoctorAppointmentController; // Pastikan import ini benar (sesuaikan namespace Anda)
 
 Route::get('/', function () {
     return view('welcome');
@@ -46,10 +47,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('doctor.queue-schedule')
         ->middleware('role:doctor');
 
-    // Halaman Antrian untuk Role Dokter
-    // Route::get('/doctor/queue', [AppointmentController::class, 'doctorQueue'])
-    //     ->name('doctor.queue')
-    //     ->middleware('role:doctor');
+    // -- Aksi Dokter pada Janji Temu --
+    Route::post('/doctor/appointments/{appointment}/update-status', [DoctorAppointmentController::class, 'updateStatus'])
+        ->name('doctor.appointments.update-status')
+        ->middleware('role:doctor');
 
     // MANAJEMEN APLIKASI UTAMA
     Route::resource('users', UserController::class)
@@ -74,8 +75,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role:admin')
         ->name('admin.payments.index');
 
-    // Route untuk Medical Records (Admin dan Dokter)
-    Route::resource('medical-records', MedicalRecordController::class);
+    // =========================================================================
+    // MODIFIKASI ROUTE MEDICAL RECORDS
+    // =========================================================================
+
+    // 1. Definisikan CREATE custom dengan parameter Appointment opsional
+    Route::get('medical-records/create/{appointment?}', [MedicalRecordController::class, 'create'])->name('medical-records.create');
+
+    // 2. Definisikan Resource, mengecualikan 'create'
+    Route::resource('medical-records', MedicalRecordController::class)->except(['create']);
+    // =========================================================================
 });
 
 // API routes for getting schedules
@@ -117,9 +126,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/app/my-appointments', [PatientAppController::class, 'myAppointments'])->name('patient.appointments.index');
     Route::post('/app/appointments/calculate-queue', [PatientAppController::class, 'calculateQueue'])->name('patient.appointments.calculate');
 
+    // --- BARU: Route Pembatalan Janji Temu ---
+    Route::put('/app/appointments/{appointment}/cancel', [PatientAppController::class, 'cancelAppointment'])
+        ->name('patient.appointments.cancel');
+
     // --- BARU: Melihat Catatan Medis Pasien ---
     Route::get('/app/appointments/{appointment}/medical-record', [PatientMedicalRecordController::class, 'show'])
-        ->name('patient.medical-records.show'); // Nama route ini akan digunakan
+        ->name('patient.medical-records.show');
 });
 
 Route::resource('payments', PaymentController::class)->except(['create', 'store', 'show', 'edit', 'update', 'destroy']); // Dikosongkan karena tidak dipakai

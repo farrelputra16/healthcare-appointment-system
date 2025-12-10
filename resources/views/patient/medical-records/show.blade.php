@@ -21,8 +21,18 @@
             {{-- Detail Janji Temu --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Tanggal Janji Temu</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ $appointment->scheduled_at->format('d M Y, H:i') }}</p>
+                    <p class="text-sm font-medium text-gray-500">Tanggal & Waktu Janji Temu</p>
+                    <p class="text-lg font-semibold text-gray-900">
+                        {{-- PERBAIKAN: Menggunakan appointment_date dan schedule->start_time --}}
+                        @if ($appointment->appointment_date)
+                            {{ $appointment->appointment_date->translatedFormat('d M Y') }}
+                            @if($appointment->schedule)
+                               , {{ substr($appointment->schedule->start_time, 0, 5) }} WIB
+                            @endif
+                        @else
+                            N/A
+                        @endif
+                    </p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500">Dokter</p>
@@ -53,10 +63,10 @@
                 </div>
             </section>
 
-            {{-- Detail Lainnya --}}
+            {{-- Detail Lainnya (Menggunakan Nullsafe Operator) --}}
             <div class="pt-4 border-t text-sm text-gray-500">
-                <p>Catatan dibuat pada: {{ $record->created_at->format('d M Y, H:i:s') }}</p>
-                <p>Terakhir diperbarui: {{ $record->updated_at->format('d M Y, H:i:s') }}</p>
+                <p>Catatan dibuat pada: {{ $record->created_at?->format('d M Y, H:i:s') ?? 'N/A' }}</p>
+                <p>Terakhir diperbarui: {{ $record->updated_at?->format('d M Y, H:i:s') ?? 'N/A' }}</p>
             </div>
 
         </div>
